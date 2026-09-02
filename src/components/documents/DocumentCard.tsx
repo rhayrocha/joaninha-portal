@@ -1,31 +1,65 @@
 import React from "react";
-import { FileText, CheckCircle, XCircle, Clock, Upload } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, Upload, ExternalLink, Calendar } from "lucide-react";
 import type { Document } from "@/types";
-import { formatDate, getDocumentStatusConfig, cn } from "@/lib/utils";
-import StatusBadge from "@/components/shared/StatusBadge";
+import { formatDate, cn } from "@/lib/utils";
 
 interface DocumentCardProps {
   document: Document;
+  personName?: string;
+  personSubtitle?: string;
+  avatarUrl?: string;
+  onUploadClick?: () => void;
 }
 
-export default function DocumentCard({ document }: DocumentCardProps) {
-  const statusConfig = getDocumentStatusConfig(document.status);
+export default function DocumentCard({ 
+  document, 
+  personName, 
+  personSubtitle, 
+  avatarUrl,
+  onUploadClick 
+}: DocumentCardProps) {
+  const isParent = document.category === "parent";
   
-  const getBorderColor = () => {
-    switch (document.status) {
-      case "approved": return "border-joaninha-green";
-      case "rejected": return "border-joaninha-red";
-      case "under_review": return "border-blue-400";
-      default: return "border-amber-400";
-    }
-  };
+  const defaultName = isParent ? "Maria Clara Santos" : "Pedro Henrique Santos";
+  const defaultSubtitle = isParent ? "Responsável Legal" : "Aluno(a) • Maternal I";
+  const defaultAvatar = isParent 
+    ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face"
+    : "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?w=150&h=150&fit=crop&crop=face";
 
-  const getIcon = () => {
+  const name = personName || defaultName;
+  const subtitle = personSubtitle || defaultSubtitle;
+  const avatar = avatarUrl || defaultAvatar;
+
+  const getStatusBadge = () => {
     switch (document.status) {
-      case "approved": return <CheckCircle className="text-joaninha-green" size={24} />;
-      case "rejected": return <XCircle className="text-joaninha-red" size={24} />;
-      case "under_review": return <Clock className="text-blue-400" size={24} />;
-      default: return <Upload className="text-amber-500" size={24} />;
+      case "approved":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Aprovado
+          </span>
+        );
+      case "under_review":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+            Em Análise
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            Rejeitado
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            Pendente
+          </span>
+        );
     }
   };
 
@@ -37,57 +71,119 @@ export default function DocumentCard({ document }: DocumentCardProps) {
   };
 
   return (
-    <div className={cn("card p-5 rounded-2xl border-l-4 transition-all", getBorderColor())}>
-      <div className="flex items-start gap-4">
-        <div className="p-3 bg-joaninha-gray-50 rounded-xl shrink-0">
-          {getIcon()}
+    <div className="card p-5 bg-white rounded-2xl shadow-card border border-gray-100 hover:shadow-elevated transition-all duration-300">
+      
+      {/* Top Header: Avatar + Person Info + Status Badge */}
+      <div className="flex items-start gap-3.5 mb-3.5">
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-joaninha-cream flex-shrink-0 shadow-sm border border-gray-200">
+          <img src={avatar} alt={name} className="w-full h-full object-cover" />
         </div>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="font-display font-bold text-joaninha-black">{document.label}</h3>
-            <StatusBadge 
-              status={document.status}
-              label={statusConfig.label}
-              colorClass={statusConfig.color}
-              dotColor={statusConfig.dot}
-            />
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h4 className="font-semibold text-joaninha-black text-base truncate">{name}</h4>
+              <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+            </div>
+            {getStatusBadge()}
           </div>
-          <p className="text-sm text-joaninha-gray-500 mb-2">{document.description}</p>
-
-          {document.status === "rejected" && document.rejectionReason && (
-            <div className="p-2.5 bg-red-50 text-joaninha-red text-xs rounded-lg border border-red-100 flex items-start gap-2 mb-2">
-              <XCircle size={14} className="mt-0.5 shrink-0" />
-              <p><strong>Motivo:</strong> {document.rejectionReason}</p>
-            </div>
-          )}
-
-          {document.fileName && (document.status === "approved" || document.status === "under_review") && (
-            <div className="flex items-center gap-2 text-xs text-joaninha-gray-500 bg-joaninha-gray-50 px-3 py-2 rounded-lg">
-              <FileText size={14} className="shrink-0" />
-              <span className="truncate font-medium">{document.fileName}</span>
-              {document.fileSize && (
-                <span className="text-joaninha-gray-400">• {formatFileSize(document.fileSize)}</span>
-              )}
-              {document.uploadedAt && (
-                <span className="text-joaninha-gray-400 hidden sm:inline">• {formatDate(document.uploadedAt)}</span>
-              )}
-            </div>
-          )}
-
-          {document.status === "pending" && (
-            <div className="flex items-center gap-2 text-xs text-amber-600 mt-1">
-              <Upload size={14} />
-              <span>Clique para enviar este documento</span>
-            </div>
-          )}
-
-          {!document.required && (
-            <span className="inline-block mt-2 text-[10px] uppercase tracking-wider text-joaninha-gray-400 font-semibold">
-              Opcional
-            </span>
-          )}
         </div>
       </div>
+
+      {/* Middle Box: Document Tile & Details */}
+      <div className="bg-gray-50/90 rounded-xl p-3 mb-3.5 flex items-center gap-3 border border-gray-100">
+        <div className="w-10 h-10 bg-white rounded-lg shadow-xs flex items-center justify-center flex-shrink-0 text-joaninha-bordeaux border border-gray-100">
+          <FileText className="w-5 h-5" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-sm text-joaninha-black truncate">
+              {document.label}
+            </span>
+            {document.required && (
+              <span className="text-[10px] font-bold text-joaninha-red shrink-0" title="Obrigatório">*</span>
+            )}
+          </div>
+
+          <div className="flex items-center text-xs text-gray-500 mt-0.5 gap-2">
+            {document.uploadedAt ? (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-gray-400" />
+                Enviado em {formatDate(document.uploadedAt)}
+              </span>
+            ) : (
+              <span className="text-amber-700">Aguardando envio do arquivo</span>
+            )}
+            {document.fileSize && (
+              <span className="text-gray-400 hidden sm:inline">• {formatFileSize(document.fileSize)}</span>
+            )}
+          </div>
+        </div>
+
+        {document.fileUrl && (
+          <a
+            href={document.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 text-gray-400 hover:text-joaninha-bordeaux transition-colors rounded-lg hover:bg-white shrink-0"
+            title="Visualizar documento"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
+      </div>
+
+      {/* Rejection notice if applicable */}
+      {document.status === "rejected" && document.rejectionReason && (
+        <div className="p-3 bg-red-50 text-joaninha-red text-xs rounded-xl border border-red-100 flex items-start gap-2 mb-3">
+          <XCircle size={15} className="mt-0.5 shrink-0 text-joaninha-red" />
+          <div>
+            <strong className="font-semibold">Motivo da recusa:</strong> {document.rejectionReason}
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Action / Status Bar */}
+      <div>
+        {document.status === "pending" && (
+          <button 
+            type="button"
+            onClick={onUploadClick}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-xs active:scale-[0.99]"
+          >
+            <Upload size={14} />
+            Enviar Documento
+          </button>
+        )}
+
+        {document.status === "rejected" && (
+          <button 
+            type="button"
+            onClick={onUploadClick}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-joaninha-red hover:bg-joaninha-red-dark text-white transition-colors shadow-xs active:scale-[0.99]"
+          >
+            <Upload size={14} />
+            Reenviar Documento
+          </button>
+        )}
+
+        {document.status === "under_review" && (
+          <div className="flex items-center justify-center gap-1.5 py-2 px-3 bg-blue-50 text-blue-700 rounded-xl text-xs font-medium border border-blue-100/60">
+            <Clock size={13} />
+            <span>Documento enviado • Em análise pela secretaria</span>
+          </div>
+        )}
+
+        {document.status === "approved" && (
+          <div className="flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-medium border border-emerald-100/60">
+            <CheckCircle size={13} className="text-emerald-600" />
+            <span>Documento verificado e aprovado</span>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

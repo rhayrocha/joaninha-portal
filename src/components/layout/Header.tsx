@@ -44,8 +44,12 @@ export default function Header({ title, subtitle }: HeaderProps) {
               <p className="text-sm font-semibold text-joaninha-black">{user?.name || 'Usuário'}</p>
               <p className="text-xs text-gray-500">{user?.email || 'email@exemplo.com'}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-joaninha-cream text-joaninha-red flex items-center justify-center font-bold font-display shadow-soft ring-2 ring-white">
-              {user?.name?.charAt(0) || 'U'}
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-joaninha-cream text-joaninha-red flex items-center justify-center font-bold font-display shadow-soft ring-2 ring-white border border-gray-100">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0) || 'U'
+              )}
             </div>
           </Link>
         </div>

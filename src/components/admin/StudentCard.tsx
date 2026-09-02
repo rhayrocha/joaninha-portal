@@ -44,12 +44,12 @@ export default function StudentCard({ student, parentName, parentPhone, parentAv
 
       <div className="pt-4 border-t border-gray-100">
         <div className="flex items-center gap-3">
-           <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center border border-gray-200">
-             {parentAvatarUrl ? (
-                <img src={parentAvatarUrl} alt={parentName} className="w-full h-full object-cover" />
-             ) : (
-                <User className="w-4 h-4 text-gray-400" />
-             )}
+           <div className="w-8 h-8 rounded-full overflow-hidden bg-joaninha-cream flex-shrink-0 flex items-center justify-center border border-gray-200">
+             <img 
+               src={parentAvatarUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face"} 
+               alt={parentName} 
+               className="w-full h-full object-cover" 
+             />
            </div>
            <div className="flex flex-col min-w-0 flex-1">
              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Responsável</span>

@@ -43,7 +43,7 @@ export const allStudents: Child[] = [
     age: 3,
     className: "Maternal I",
     shift: "Integral",
-    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=PedroHenrique&backgroundColor=b6e3f4",
+    photoUrl: "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?w=200&h=200&fit=crop&crop=face",
     parentId: "usr_001",
     enrollmentDate: "2026-02-01",
   },
@@ -152,7 +152,7 @@ export const allStudents: Child[] = [
 
 // Parent info lookup for admin panel
 export const parentInfo: Record<string, { name: string; email: string; phone: string; avatarUrl: string }> = {
-  usr_001: { name: "Maria Clara Santos", email: "maria.santos@email.com", phone: "(11) 98765-4321", avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=MariaClara&backgroundColor=ffd5dc" },
+  usr_001: { name: "Maria Clara Santos", email: "maria.santos@email.com", phone: "(11) 98765-4321", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face" },
   usr_002: { name: "Ana Paula Oliveira", email: "ana.oliveira@email.com", phone: "(11) 97654-3210", avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnaPaula&backgroundColor=c0aede" },
   usr_003: { name: "Fernanda Costa", email: "fernanda.costa@email.com", phone: "(11) 96543-2109", avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Fernanda&backgroundColor=ffdfbf" },
   usr_004: { name: "Roberto Pereira", email: "roberto.pereira@email.com", phone: "(11) 95432-1098", avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Roberto&backgroundColor=b6e3f4" },

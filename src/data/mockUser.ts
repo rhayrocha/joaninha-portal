@@ -16,5 +16,5 @@ export const mockUser: User = {
     state: "SP",
     zipCode: "01234-567",
   },
-  avatarUrl: undefined,
+  avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
 };

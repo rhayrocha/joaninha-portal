@@ -42,12 +42,12 @@ export default function DocumentReviewCard({
     <div className="card p-5 bg-white rounded-2xl shadow-card border border-gray-100 hover:shadow-elevated transition-shadow">
       <div className="flex items-start gap-4">
         {/* Avatar */}
-        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm border border-gray-200 flex items-center justify-center">
-          {avatarUrl ? (
-             <img src={avatarUrl} alt={parentName} className="w-full h-full object-cover" />
-          ) : (
-             <User className="w-6 h-6 text-gray-400" />
-          )}
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-joaninha-cream flex-shrink-0 shadow-sm border border-gray-200 flex items-center justify-center">
+          <img 
+            src={avatarUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face"} 
+            alt={parentName} 
+            className="w-full h-full object-cover" 
+          />
         </div>
 
         {/* Info */}

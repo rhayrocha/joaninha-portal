@@ -6,9 +6,13 @@ import DocumentProgressBar from '@/components/documents/DocumentProgressBar';
 import DocumentCard from '@/components/documents/DocumentCard';
 import DocumentUploader from '@/components/documents/DocumentUploader';
 import { mockDocuments } from '@/data/mockDocuments';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Document } from '@/types';
 
 export default function DocumentosPage() {
+  const { user, children } = useAuth();
+  const mainChild = children && children.length > 0 ? children[0] : null;
+
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
 
@@ -35,16 +39,17 @@ export default function DocumentosPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {docs.map(doc => (
           <div key={doc.id} className="space-y-3">
-            <div 
-              className="cursor-pointer"
-              onClick={() => {
+            <DocumentCard 
+              document={doc}
+              personName={doc.category === 'parent' ? (user?.name || "Maria Clara Santos") : (mainChild?.name || "Pedro Henrique Santos")}
+              personSubtitle={doc.category === 'parent' ? "Responsável Legal" : `Aluno(a) • ${mainChild?.className || "Maternal I"}`}
+              avatarUrl={doc.category === 'parent' ? user?.avatarUrl : mainChild?.photoUrl}
+              onUploadClick={() => {
                 if (doc.status === 'pending' || doc.status === 'rejected') {
                   setUploadingDocId(uploadingDocId === doc.id ? null : doc.id);
                 }
               }}
-            >
-              <DocumentCard document={doc} />
-            </div>
+            />
             {uploadingDocId === doc.id && (doc.status === 'pending' || doc.status === 'rejected') && (
               <DocumentUploader 
                 documentId={doc.id}

@@ -21,8 +21,12 @@ export default function PerfilPage() {
           
           <div className="px-6 sm:px-8 pb-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-end -mt-16 mb-8 gap-4 sm:gap-6 relative">
-              <div className="w-32 h-32 rounded-full border-4 border-white bg-joaninha-gray-100 flex items-center justify-center text-4xl font-display font-bold text-joaninha-gray-600 shadow-soft z-10 bg-white">
-                {initials}
+              <div className="w-32 h-32 rounded-full border-4 border-white bg-joaninha-cream overflow-hidden flex items-center justify-center text-4xl font-display font-bold text-joaninha-gray-600 shadow-soft z-10">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
               </div>
               <div className="flex-1 text-center sm:text-left mb-2">
                 <h2 className="text-2xl font-display font-bold text-joaninha-black">{user.name}</h2>
@@ -84,8 +88,12 @@ export default function PerfilPage() {
               const childInitials = child.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
               return (
                 <div key={child.id} className="card-elevated bg-white p-6 rounded-2xl flex flex-col sm:flex-row gap-5 items-center sm:items-start text-center sm:text-left">
-                  <div className="w-20 h-20 rounded-full bg-joaninha-pink-light flex items-center justify-center text-xl font-display font-bold text-joaninha-red shrink-0">
-                    {childInitials}
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-joaninha-pink-light flex items-center justify-center text-xl font-display font-bold text-joaninha-red shrink-0 shadow-sm border border-gray-100">
+                    {child.photoUrl ? (
+                      <img src={child.photoUrl} alt={child.name} className="w-full h-full object-cover" />
+                    ) : (
+                      childInitials
+                    )}
                   </div>
                   <div className="flex-1 space-y-3">
                     <div>

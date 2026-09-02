@@ -60,10 +60,14 @@ export default function AdminDocumentosPage() {
     if (doc.childId) {
       const student = allStudents.find(s => s.id === doc.childId);
       if (student && student.parentId) {
-        return parentInfo[student.parentId]?.name || 'Responsável não encontrado';
+        return parentInfo[student.parentId]?.name || 'Maria Clara Santos';
       }
     }
-    return 'Responsável da Família'; // Fallback for parent docs
+    if (doc.label.includes('Maria Clara')) return 'Maria Clara Santos';
+    if (doc.label.includes('Ana Paula')) return 'Ana Paula Oliveira';
+    if (doc.label.includes('Fernanda')) return 'Fernanda Costa';
+    if (doc.label.includes('Roberto')) return 'Roberto Pereira';
+    return 'Maria Clara Santos';
   };
 
   const getStudentName = (doc: DocType) => {
@@ -71,7 +75,24 @@ export default function AdminDocumentosPage() {
       const student = allStudents.find(s => s.id === doc.childId);
       return student ? student.name : undefined;
     }
+    if (doc.label.includes('Maria Clara')) return 'Pedro Henrique Santos';
+    if (doc.label.includes('Ana Paula')) return 'Sofia Oliveira';
+    if (doc.label.includes('Fernanda')) return 'Miguel Costa';
+    if (doc.label.includes('Roberto')) return 'Laura Pereira';
     return undefined;
+  };
+
+  const getParentAvatar = (doc: DocType) => {
+    if (doc.childId) {
+      const student = allStudents.find(s => s.id === doc.childId);
+      if (student && student.parentId && parentInfo[student.parentId]?.avatarUrl) {
+        return parentInfo[student.parentId].avatarUrl;
+      }
+    }
+    if (doc.label.includes('Ana Paula')) return parentInfo.usr_002?.avatarUrl;
+    if (doc.label.includes('Fernanda')) return parentInfo.usr_003?.avatarUrl;
+    if (doc.label.includes('Roberto')) return parentInfo.usr_004?.avatarUrl;
+    return parentInfo.usr_001?.avatarUrl;
   };
 
   return (
@@ -138,6 +159,7 @@ export default function AdminDocumentosPage() {
               document={doc}
               parentName={getParentName(doc)}
               childName={getStudentName(doc)}
+              avatarUrl={getParentAvatar(doc)}
               onApprove={(id) => handleApprove(id)}
               onReject={(id, reason) => handleReject(id, reason)}
             />
