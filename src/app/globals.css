@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --joaninha-red: #E63946;
+    --joaninha-red-dark: #C62D38;
+    --joaninha-black: #1D1D1D;
+    --joaninha-green: #4A9B4A;
+    --joaninha-lavender: #B8B8E0;
+    --joaninha-pink: #F8C8D4;
+    --joaninha-bordeaux: #7B1631;
+    --joaninha-cream: #FFF8F0;
+    --joaninha-off-white: #FAFAF8;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', 'Nunito', system-ui, sans-serif;
+    background-color: var(--joaninha-off-white);
+    color: var(--joaninha-black);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-joaninha-red hover:bg-joaninha-red-dark text-white font-semibold 
+           py-3 px-6 rounded-2xl transition-all duration-200 
+           shadow-soft hover:shadow-elevated active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-joaninha-red/50 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-joaninha-cream text-joaninha-black font-semibold 
+           py-3 px-6 rounded-2xl transition-all duration-200 
+           border border-gray-200 hover:border-joaninha-red/30
+           shadow-card hover:shadow-soft active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-joaninha-red/30 focus:ring-offset-2;
+  }
+
+  .btn-success {
+    @apply bg-joaninha-green hover:bg-joaninha-green-light text-white font-semibold 
+           py-3 px-6 rounded-2xl transition-all duration-200 
+           shadow-soft hover:shadow-elevated active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-joaninha-green/50 focus:ring-offset-2;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-gray-100/80 
+           transition-all duration-200 hover:shadow-soft;
+  }
+
+  .card-elevated {
+    @apply bg-white rounded-3xl shadow-soft border border-gray-100/50 
+           transition-all duration-200 hover:shadow-elevated;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 
+           bg-white text-joaninha-black placeholder:text-gray-400
+           focus:outline-none focus:ring-2 focus:ring-joaninha-red/30 focus:border-joaninha-red
+           transition-all duration-200;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full 
+           text-xs font-semibold tracking-wide;
+  }
+
+  /* Ladybug pattern background */
+  .bg-pattern {
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(230, 57, 70, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(74, 155, 74, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 60% 80%, rgba(184, 184, 224, 0.05) 0%, transparent 50%);
+  }
+
+  /* Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
+
+  /* Upload dropzone */
+  .dropzone {
+    @apply border-2 border-dashed border-gray-300 rounded-2xl p-8 
+           text-center cursor-pointer transition-all duration-200
+           hover:border-joaninha-red/50 hover:bg-joaninha-pink-light/30;
+  }
+
+  .dropzone-active {
+    @apply border-joaninha-red bg-joaninha-pink-light/50 scale-[1.02];
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-joaninha-red to-joaninha-bordeaux bg-clip-text text-transparent;
+  }
+
+  .animate-in {
+    animation: fadeIn 0.5s ease-out, slideUp 0.4s ease-out;
+  }
+}

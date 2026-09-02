@@ -1,0 +1,66 @@
+"use client";
+
+import React from 'react';
+import type { Child } from '@/types';
+import { User, Phone } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface StudentCardProps {
+  student: Child;
+  parentName: string;
+  parentPhone: string;
+  parentAvatarUrl?: string;
+}
+
+export default function StudentCard({ student, parentName, parentPhone, parentAvatarUrl }: StudentCardProps) {
+  // Format age correctly (assuming we calculate it or just display a string if it's not a Date)
+  // Since mock data might just have birthDate, we might need a helper, but let's assume we show a formatted string for now
+  
+  const getInitials = (name: string) => name.charAt(0).toUpperCase();
+
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+      <div className="flex flex-col items-center text-center">
+        {/* Child Avatar */}
+        <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border-2 border-white shadow-sm bg-joaninha-lavender/30 flex items-center justify-center text-joaninha-bordeaux font-display text-xl font-bold group-hover:scale-105 transition-transform">
+           {student.photoUrl ? (
+             <img src={student.photoUrl} alt={student.name} className="w-full h-full object-cover" />
+           ) : (
+             getInitials(student.name)
+           )}
+        </div>
+        
+        <h4 className="font-bold text-joaninha-black text-lg mb-1">{student.name}</h4>
+        
+        <div className="flex flex-wrap justify-center gap-2 mb-4 w-full">
+           <span className="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
+             {student.className}
+           </span>
+           <span className="text-xs font-semibold px-2 py-1 bg-joaninha-cream text-joaninha-bordeaux rounded-md">
+             {student.shift === 'full' || student.shift === 'Integral' ? 'Integral' : student.shift === 'morning' || student.shift === 'Manhã' ? 'Manhã' : 'Tarde'}
+           </span>
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-100">
+        <div className="flex items-center gap-3">
+           <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center border border-gray-200">
+             {parentAvatarUrl ? (
+                <img src={parentAvatarUrl} alt={parentName} className="w-full h-full object-cover" />
+             ) : (
+                <User className="w-4 h-4 text-gray-400" />
+             )}
+           </div>
+           <div className="flex flex-col min-w-0 flex-1">
+             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Responsável</span>
+             <span className="text-sm font-semibold text-joaninha-black truncate">{parentName}</span>
+           </div>
+        </div>
+        <div className="mt-2 flex items-center text-xs text-gray-500 gap-1.5 ml-11">
+           <Phone className="w-3.5 h-3.5" />
+           {parentPhone}
+        </div>
+      </div>
+    </div>
+  );
+}
