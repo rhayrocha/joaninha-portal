@@ -4,6 +4,8 @@ import AppShell from '@/components/layout/AppShell';
 import WelcomeCard from '@/components/dashboard/WelcomeCard';
 import DocumentAlert from '@/components/dashboard/DocumentAlert';
 import NextPaymentCard from '@/components/dashboard/NextPaymentCard';
+import DailyRoutineCard from '@/components/dashboard/DailyRoutineCard';
+import SchoolAgendaCard from '@/components/dashboard/SchoolAgendaCard';
 import CameraPreview from '@/components/dashboard/CameraPreview';
 import { mockDocuments } from '@/data/mockDocuments';
 import { mockPayments } from '@/data/mockPayments';
@@ -15,30 +17,36 @@ export default function DashboardPage() {
   const pendingDocsCount = mockDocuments.filter(doc => doc.status !== 'approved').length;
   
   const sortedPayments = [...mockPayments].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  const nextPayment = sortedPayments.find(p => p.status === 'pending' || p.status === 'overdue');
+  const nextPayment = sortedPayments.find(p => p.status === 'pending' || p.status === 'overdue') || null;
 
   return (
-    <AppShell title="Dashboard">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 sm:p-6 animate-in">
-        <div className="col-span-1 md:col-span-2">
-          <WelcomeCard />
-        </div>
-        
-        <div className="col-span-1 animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <DocumentAlert pendingCount={pendingDocsCount} totalCount={mockDocuments.length} />
-        </div>
-        
-        <div className="col-span-1 animate-slide-up" style={{ animationDelay: '200ms' }}>
-          {nextPayment ? (
+    <AppShell title="Dashboard" subtitle="Espaço Exclusivo da Família">
+      <div className="space-y-6 sm:space-y-8 animate-in pb-12">
+        {/* 1. Hero Spotlight: Parent & Child Overview */}
+        <WelcomeCard />
+
+        {/* 2. Primary Management Row: Finance & Cadastral Compliance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <div className="h-full">
             <NextPaymentCard payment={nextPayment} />
-          ) : (
-            <div className="card h-full flex items-center justify-center bg-white p-6 rounded-2xl shadow-soft">
-              <p className="text-joaninha-gray-500 font-medium">Nenhuma mensalidade pendente!</p>
-            </div>
-          )}
+          </div>
+          <div className="h-full">
+            <DocumentAlert pendingCount={pendingDocsCount} totalCount={mockDocuments.length} />
+          </div>
         </div>
-        
-        <div className="col-span-1 md:col-span-2 animate-slide-up" style={{ animationDelay: '300ms' }}>
+
+        {/* 3. Daily Pedagogical Experience, Nutrition & School Community Agenda */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <div className="lg:col-span-7 h-full">
+            <DailyRoutineCard />
+          </div>
+          <div className="lg:col-span-5 h-full">
+            <SchoolAgendaCard />
+          </div>
+        </div>
+
+        {/* 4. Closed-Circuit Security Monitoring */}
+        <div>
           <CameraPreview />
         </div>
       </div>
