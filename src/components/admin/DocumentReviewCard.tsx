@@ -52,12 +52,12 @@ export default function DocumentReviewCard({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h4 className="font-semibold text-joaninha-black truncate">{parentName}</h4>
-              {childName && <p className="text-sm text-gray-500 truncate">Resp. por {childName}</p>}
+          <div className="flex flex-wrap sm:flex-nowrap justify-between items-start gap-1.5 sm:gap-2 mb-2 min-w-0">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-semibold text-joaninha-black truncate" title={parentName}>{parentName}</h4>
+              {childName && <p className="text-sm text-gray-500 truncate" title={`Resp. por ${childName}`}>Resp. por {childName}</p>}
             </div>
-            <span className="badge bg-amber-100 text-amber-800 border-amber-200">
+            <span className="badge bg-amber-100 text-amber-800 border-amber-200 shrink-0 whitespace-nowrap self-start sm:self-center">
               Pendente
             </span>
           </div>

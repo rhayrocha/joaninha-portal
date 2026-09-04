@@ -42,16 +42,23 @@ export default function AdminShell({ children, title, subtitle }: AdminShellProp
       {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <div className="relative w-64 max-w-sm bg-gradient-to-b from-joaninha-bordeaux to-joaninha-black flex-1 flex flex-col shadow-2xl transform transition-transform animate-slide-in-right">
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setMobileMenuOpen(false)} 
+          />
+          <div className="relative w-72 max-w-[80vw] bg-gradient-to-b from-joaninha-bordeaux to-joaninha-black flex flex-col shadow-2xl z-50 animate-slide-in-right">
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 rounded-full p-2"
+              className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 rounded-full p-2 z-10"
+              aria-label="Fechar menu"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
             <div className="h-full overflow-y-auto">
-               <AdminSidebar />
+               <AdminSidebar 
+                 className="flex flex-col w-full h-full bg-transparent shadow-none" 
+                 onItemClick={() => setMobileMenuOpen(false)} 
+               />
             </div>
           </div>
         </div>

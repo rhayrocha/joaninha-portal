@@ -20,56 +20,36 @@ export default function AnnualPaymentCard({
   const savings = annualTotal - discountedTotal;
 
   return (
-    <div className="card p-6 md:p-7 rounded-3xl bg-gradient-to-br from-white via-joaninha-off-white to-joaninha-cream/40 border border-joaninha-gray-200/80 shadow-card hover:shadow-soft transition-all duration-300 relative overflow-hidden">
-      {/* Subtle top accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-joaninha-bordeaux via-joaninha-red to-joaninha-bordeaux"></div>
-
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 shadow-xs hover:shadow-card transition-all duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         
-        {/* Left column: Badge, Title & Description */}
-        <div className="flex-1 min-w-0 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-joaninha-cream text-joaninha-bordeaux border border-joaninha-bordeaux/20">
-              <Sparkles className="w-3.5 h-3.5 text-joaninha-red" />
-              Condição Especial • {discountPercent}% OFF
-            </span>
+        {/* Left: Discreet badge + text */}
+        <div className="flex items-start sm:items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-joaninha-cream text-joaninha-bordeaux flex items-center justify-center shrink-0 border border-joaninha-bordeaux/15 shadow-2xs">
+            <Sparkles className="w-4 h-4 text-joaninha-red" />
           </div>
-
-          <div>
-            <h3 className="text-xl md:text-2xl font-display font-bold text-joaninha-black leading-snug">
-              Plano Anual com 10% de Desconto
-            </h3>
-            <p className="text-sm text-joaninha-gray-600 mt-1 max-w-xl">
-              Antecipe a anuidade de 12 meses do seu filho com desconto especial, garantindo a vaga do ano letivo com economia de {formatCurrency(savings)}.
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xs font-bold text-joaninha-bordeaux uppercase tracking-wider">
+                Condição Especial • Plano Anual
+              </span>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                10% OFF
+              </span>
+            </div>
+            <p className="text-xs text-stone-600">
+              Economize <strong className="text-stone-900 font-semibold">{formatCurrency(savings)}</strong> antecipando a anuidade do ano letivo ({formatCurrency(discountedTotal)} à vista).
             </p>
           </div>
-
-          {/* Pricing summary */}
-          <div className="flex flex-wrap items-baseline gap-3 pt-1">
-            <span className="text-xs font-semibold text-gray-400 line-through">
-              De {formatCurrency(annualTotal)}
-            </span>
-            <span className="text-2xl font-display font-bold text-joaninha-bordeaux">
-              Por {formatCurrency(discountedTotal)}
-            </span>
-            <span className="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60">
-              Economia de {formatCurrency(savings)}
-            </span>
-          </div>
         </div>
 
-        {/* Right column: CTA button */}
-        <div className="lg:text-right shrink-0 flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100">
-          <Link href="/pagamento/annual" className="w-full sm:w-auto">
-            <button className="w-full sm:w-auto bg-joaninha-bordeaux hover:bg-joaninha-bordeaux/90 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all duration-200 shadow-soft hover:shadow-elevated flex items-center justify-center gap-2 group">
-              <span>Optar pelo Plano Anual</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </Link>
-          <span className="text-[11px] text-gray-400">
-            Pagamento à vista via PIX ou Boleto
-          </span>
-        </div>
+        {/* Right: Compact Action */}
+        <Link href="/pagamento/annual" className="shrink-0 self-end sm:self-center">
+          <button className="py-2 px-4 rounded-xl text-xs font-semibold bg-joaninha-cream hover:bg-joaninha-bordeaux hover:text-white text-joaninha-bordeaux border border-joaninha-bordeaux/20 transition-all duration-200 flex items-center gap-1.5 shadow-2xs group">
+            <span>Ver Condições</span>
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </Link>
 
       </div>
     </div>

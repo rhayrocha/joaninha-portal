@@ -34,28 +34,28 @@ export default function DocumentCard({
     switch (document.status) {
       case "approved":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             Aprovado
           </span>
         );
       case "under_review":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 bg-blue-50 text-blue-700 border border-blue-200">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
             Em Análise
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 bg-red-50 text-red-700 border border-red-200">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
             Rejeitado
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 bg-amber-50 text-amber-800 border border-amber-200">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             Pendente
           </span>
@@ -71,34 +71,40 @@ export default function DocumentCard({
   };
 
   return (
-    <div className="card p-5 bg-white rounded-2xl shadow-card border border-gray-100 hover:shadow-elevated transition-all duration-300">
+    <div className="card p-4 sm:p-5 bg-white rounded-2xl shadow-card border border-gray-100 hover:shadow-elevated transition-all duration-300 overflow-hidden min-w-0">
       
       {/* Top Header: Avatar + Person Info + Status Badge */}
-      <div className="flex items-start gap-3.5 mb-3.5">
-        <div className="w-12 h-12 rounded-full overflow-hidden bg-joaninha-cream flex-shrink-0 shadow-sm border border-gray-200">
+      <div className="flex items-start gap-3 sm:gap-3.5 mb-3.5 min-w-0">
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-joaninha-cream flex-shrink-0 shadow-sm border border-gray-200">
           <img src={avatar} alt={name} className="w-full h-full object-cover" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h4 className="font-semibold text-joaninha-black text-base truncate">{name}</h4>
-              <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+          <div className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-1.5 sm:gap-2 min-w-0">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-semibold text-joaninha-black text-sm sm:text-base truncate" title={name}>
+                {name}
+              </h4>
+              <p className="text-xs text-gray-500 truncate" title={subtitle}>
+                {subtitle}
+              </p>
             </div>
-            {getStatusBadge()}
+            <div className="shrink-0 self-start sm:self-center">
+              {getStatusBadge()}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Middle Box: Document Tile & Details */}
-      <div className="bg-gray-50/90 rounded-xl p-3 mb-3.5 flex items-center gap-3 border border-gray-100">
+      <div className="bg-gray-50/90 rounded-xl p-3 mb-3.5 flex items-center gap-2.5 sm:gap-3 border border-gray-100 min-w-0">
         <div className="w-10 h-10 bg-white rounded-lg shadow-xs flex items-center justify-center flex-shrink-0 text-joaninha-bordeaux border border-gray-100">
           <FileText className="w-5 h-5" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-sm text-joaninha-black truncate">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-semibold text-sm text-joaninha-black truncate min-w-0" title={document.label}>
               {document.label}
             </span>
             {document.required && (
@@ -106,14 +112,14 @@ export default function DocumentCard({
             )}
           </div>
 
-          <div className="flex items-center text-xs text-gray-500 mt-0.5 gap-2">
+          <div className="flex flex-wrap items-center text-xs text-gray-500 mt-0.5 gap-x-2 gap-y-0.5 min-w-0">
             {document.uploadedAt ? (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-gray-400" />
-                Enviado em {formatDate(document.uploadedAt)}
+              <span className="flex items-center gap-1 min-w-0 truncate">
+                <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                <span className="truncate">Enviado em {formatDate(document.uploadedAt)}</span>
               </span>
             ) : (
-              <span className="text-amber-700">Aguardando envio do arquivo</span>
+              <span className="text-amber-700 truncate">Aguardando envio do arquivo</span>
             )}
             {document.fileSize && (
               <span className="text-gray-400 hidden sm:inline">• {formatFileSize(document.fileSize)}</span>
@@ -126,7 +132,7 @@ export default function DocumentCard({
             href={document.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 text-gray-400 hover:text-joaninha-bordeaux transition-colors rounded-lg hover:bg-white shrink-0"
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-joaninha-bordeaux transition-colors rounded-lg hover:bg-white shrink-0 ml-auto"
             title="Visualizar documento"
             onClick={(e) => e.stopPropagation()}
           >

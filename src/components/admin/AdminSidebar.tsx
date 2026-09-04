@@ -14,11 +14,13 @@ interface NavItemProps {
   icon: React.ElementType;
   label: string;
   isActive: boolean;
+  onClick?: () => void;
 }
 
-const NavItem = ({ href, icon: Icon, label, isActive }: NavItemProps) => (
+const NavItem = ({ href, icon: Icon, label, isActive, onClick }: NavItemProps) => (
   <Link
     href={href}
+    onClick={onClick}
     className={cn(
       "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200",
       "text-white hover:bg-white/10",
@@ -30,13 +32,19 @@ const NavItem = ({ href, icon: Icon, label, isActive }: NavItemProps) => (
   </Link>
 );
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  className?: string;
+  onItemClick?: () => void;
+}
+
+export default function AdminSidebar({ className, onItemClick }: AdminSidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { admin, logout } = useAdminAuth();
 
   const handleLogout = () => {
     logout();
+    onItemClick?.();
     router.push('/admin/login');
   };
 
@@ -48,7 +56,10 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-gradient-to-b from-joaninha-bordeaux to-joaninha-black flex flex-col h-screen fixed md:relative z-40 shadow-xl overflow-y-auto hidden md:flex">
+    <aside className={cn(
+      "w-64 flex-shrink-0 bg-gradient-to-b from-joaninha-bordeaux to-joaninha-black flex flex-col h-screen fixed md:relative z-40 shadow-xl overflow-y-auto hidden md:flex",
+      className
+    )}>
       <div className="p-6 flex flex-col items-center border-b border-white/10">
         <Logo whiteText className="scale-90 transform origin-top" />
         <span className="mt-2 text-[10px] font-bold tracking-wider text-joaninha-bordeaux bg-white px-2 py-0.5 rounded-full uppercase shadow-sm">
@@ -64,6 +75,7 @@ export default function AdminSidebar() {
             icon={item.icon}
             label={item.label}
             isActive={pathname?.startsWith(item.href) || false}
+            onClick={onItemClick}
           />
         ))}
       </nav>

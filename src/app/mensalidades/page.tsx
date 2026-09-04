@@ -16,8 +16,6 @@ export default function MensalidadesPage() {
   const paidPayments = mockPayments.filter(p => p.status === 'paid');
   const pendingPayments = mockPayments.filter(p => p.status === 'pending');
   const overduePayments = mockPayments.filter(p => p.status === 'overdue');
-  
-  const totalPaid = paidPayments.reduce((acc, curr) => acc + curr.amount, 0);
 
   const filteredPayments = mockPayments.filter(p => {
     if (filter === 'all') return true;
@@ -41,23 +39,13 @@ export default function MensalidadesPage() {
         {!hasAnnualPayment && <AnnualPaymentCard />}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="card-elevated bg-white p-5 rounded-2xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-joaninha-green-light flex items-center justify-center text-joaninha-green">
-              <CheckCircle size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-joaninha-gray-500 font-medium">Total Pago (Ano)</p>
-              <p className="text-xl font-bold text-joaninha-black">{formatCurrency(totalPaid)}</p>
-            </div>
-          </div>
-          
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="card-elevated bg-white p-5 rounded-2xl flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-joaninha-gray-100 flex items-center justify-center text-joaninha-gray-600">
               <Clock size={24} />
             </div>
             <div>
-              <p className="text-sm text-joaninha-gray-500 font-medium">Pendentes</p>
+              <p className="text-sm text-joaninha-gray-500 font-medium">Mensalidades Pendentes</p>
               <p className="text-xl font-bold text-joaninha-black">{pendingPayments.length}</p>
             </div>
           </div>
@@ -67,7 +55,7 @@ export default function MensalidadesPage() {
               <FileText size={24} />
             </div>
             <div>
-              <p className="text-sm text-joaninha-gray-500 font-medium">Vencidas</p>
+              <p className="text-sm text-joaninha-gray-500 font-medium">Mensalidades Vencidas</p>
               <p className={cn("text-xl font-bold", overduePayments.length > 0 ? "text-joaninha-red" : "text-joaninha-black")}>
                 {overduePayments.length}
               </p>
