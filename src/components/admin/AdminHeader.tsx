@@ -5,6 +5,7 @@ import { Menu, Bell, Search, X } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import LadybugIcon from '@/components/shared/LadybugIcon';
 
 interface AdminHeaderProps {
   title: string;
@@ -27,12 +28,33 @@ export default function AdminHeader({ title, subtitle, onMenuClick }: AdminHeade
         </button>
       )}
 
-      <div className="flex flex-col flex-1 min-w-0">
-        <h1 className="text-lg md:text-2xl font-display font-bold text-white md:text-joaninha-black truncate leading-tight">
+      {/* Mobile Joaninha Brand (Logo + Nome) */}
+      <Link href="/admin/dashboard" className="flex items-center gap-2.5 md:hidden flex-1 min-w-0">
+        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-xs shrink-0 ring-2 ring-white/30">
+          <LadybugIcon size={20} />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-display font-bold text-base text-white leading-none">
+              Joaninha
+            </span>
+            <span className="text-[9px] font-bold tracking-wider text-joaninha-bordeaux bg-white px-1.5 py-0.5 rounded-full uppercase leading-none shadow-xs">
+              Admin
+            </span>
+          </div>
+          <span className="text-[9px] uppercase tracking-wider text-white/80 font-medium leading-none mt-0.5 truncate">
+            Creche Escola Bilíngue
+          </span>
+        </div>
+      </Link>
+
+      {/* Desktop Title & Subtitle */}
+      <div className="hidden md:flex flex-col flex-1 min-w-0">
+        <h1 className="text-2xl font-display font-bold text-joaninha-black truncate leading-tight">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-xs text-white/80 md:text-gray-500 truncate hidden sm:block mt-0.5">
+          <p className="text-sm text-gray-500 truncate mt-0.5">
             {subtitle}
           </p>
         )}

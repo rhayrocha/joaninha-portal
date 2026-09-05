@@ -42,6 +42,16 @@ export default function AppShell({ children, title, subtitle, className }: AppSh
         
         <main className={cn('flex-1 p-4 lg:p-8 overflow-y-auto bg-pattern pb-24 lg:pb-8', className)}>
           <div className="max-w-6xl mx-auto animate-in">
+            {title && title !== 'Dashboard' && (
+              <div className="lg:hidden mb-4">
+                <h1 className="text-xl font-display font-bold text-joaninha-black leading-tight">
+                  {title}
+                </h1>
+                {subtitle && (
+                  <p className="text-xs text-stone-500 mt-0.5">{subtitle}</p>
+                )}
+              </div>
+            )}
             {children}
           </div>
         </main>

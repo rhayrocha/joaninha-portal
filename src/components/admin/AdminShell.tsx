@@ -74,7 +74,17 @@ export default function AdminShell({ children, title, subtitle }: AdminShellProp
         
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 custom-scrollbar relative">
           <div className="absolute inset-0 bg-pattern opacity-30 pointer-events-none"></div>
-          <div className="container mx-auto px-4 py-8 md:px-8 max-w-7xl relative z-10 animate-fade-in">
+          <div className="container mx-auto px-4 py-6 md:py-8 md:px-8 max-w-7xl relative z-10 animate-fade-in">
+            {title && title !== 'Dashboard' && (
+              <div className="md:hidden mb-5">
+                <h1 className="text-xl font-display font-bold text-joaninha-black leading-tight">
+                  {title}
+                </h1>
+                {subtitle && (
+                  <p className="text-xs text-stone-500 mt-0.5">{subtitle}</p>
+                )}
+              </div>
+            )}
             {children}
           </div>
         </main>

@@ -5,6 +5,7 @@ import { Bell, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import LadybugIcon from '@/components/shared/LadybugIcon';
 
 interface HeaderProps {
   title: string;
@@ -27,13 +28,29 @@ export default function Header({ title, subtitle }: HeaderProps) {
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
+
+          {/* Mobile Joaninha Brand (Logo + Nome) */}
+          <Link href="/dashboard" className="flex items-center gap-2.5 lg:hidden">
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-xs shrink-0 ring-2 ring-white/30">
+              <LadybugIcon size={20} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-display font-bold text-base text-white leading-none tracking-tight">
+                Joaninha
+              </span>
+              <span className="text-[9px] uppercase tracking-wider text-white/80 font-medium leading-none mt-0.5">
+                Creche Escola Bilíngue
+              </span>
+            </div>
+          </Link>
           
-          <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold font-display text-white lg:text-joaninha-black leading-tight">
+          {/* Desktop Title & Subtitle */}
+          <div className="hidden lg:block">
+            <h1 className="text-xl lg:text-2xl font-bold font-display text-joaninha-black leading-tight">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-xs text-white/80 lg:text-gray-500 mt-0.5">
+              <p className="text-sm text-gray-500 mt-0.5">
                 {subtitle}
               </p>
             )}
@@ -67,6 +84,15 @@ export default function Header({ title, subtitle }: HeaderProps) {
       
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-joaninha-red-dark/30 bg-white text-stone-900 absolute w-full shadow-2xl p-4 animate-in z-40">
+          <div className="flex items-center gap-3 pb-3 mb-3 border-b border-gray-100">
+            <div className="w-10 h-10 rounded-2xl bg-joaninha-cream flex items-center justify-center border border-joaninha-bordeaux/15 shadow-2xs">
+              <LadybugIcon size={24} />
+            </div>
+            <div>
+              <p className="font-display font-bold text-base text-joaninha-black leading-tight">Joaninha</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Creche Escola Bilíngue</p>
+            </div>
+          </div>
           <nav className="flex flex-col gap-1.5">
             <Link 
               href="/dashboard" 
