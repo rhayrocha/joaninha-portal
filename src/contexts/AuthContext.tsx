@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateAvatar: (url: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -151,6 +152,10 @@ export function AuthProvider({ children: childrenProp }: { children: ReactNode }
     setChildren([]);
   }, [supabase]);
 
+  const updateAvatar = useCallback((url: string) => {
+    setUser(prev => prev ? { ...prev, avatarUrl: url } : null);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -160,6 +165,7 @@ export function AuthProvider({ children: childrenProp }: { children: ReactNode }
         isLoading,
         login,
         logout,
+        updateAvatar,
       }}
     >
       {childrenProp}

@@ -1,21 +1,50 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import ClassSection from '@/components/admin/ClassSection';
-import { allStudents, parentInfo, CLASS_NAMES } from '@/data/mockStudents';
-import { Search } from 'lucide-react';
+import NewParentModal from '@/components/admin/NewParentModal';
+import { allStudents as initialStudents, parentInfo as initialParentInfo, CLASS_NAMES } from '@/data/mockStudents';
+import { Search, UserPlus } from 'lucide-react';
 
 export default function AdminAlunosPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [students, setStudents] = useState(initialStudents);
+  const [parentMap, setParentMap] = useState(initialParentInfo);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredStudents = allStudents.filter(student => 
+  const loadStudents = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/students/list', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.students && Array.isArray(data.students)) {
+          setStudents(data.students);
+        }
+        if (data.parentInfo) {
+          setParentMap(data.parentInfo);
+        }
+      }
+    } catch (err) {
+      console.error('[Admin Alunos] Erro ao carregar alunos:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const filteredStudents = students.filter(student => 
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.className.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <AdminShell title="Alunos" subtitle="Gestão de turmas e alunos">
+    <AdminShell title="Alunos" subtitle="Gestão de turmas e matrículas">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="relative w-full max-w-md">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -29,11 +58,20 @@ export default function AdminAlunosPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-4">
-          <div className="rounded-xl bg-white px-4 py-2 shadow-sm border border-joaninha-gray-100">
-            <span className="text-sm font-medium text-joaninha-gray-500">Total de Alunos:</span>
-            <span className="ml-2 font-bold text-joaninha-black">{allStudents.length}</span>
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-white px-4 py-2.5 shadow-sm border border-joaninha-gray-100 text-sm">
+            <span className="font-medium text-joaninha-gray-500">Total de Alunos:</span>
+            <span className="ml-2 font-bold text-joaninha-black">{students.length}</span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm whitespace-nowrap"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Cadastrar Responsável</span>
+          </button>
         </div>
       </div>
 
@@ -48,7 +86,7 @@ export default function AdminAlunosPage() {
               key={className}
               className={className}
               students={studentsInClass}
-              parentInfoMap={parentInfo}
+              parentInfoMap={parentMap}
             />
           );
         })}
@@ -60,6 +98,14 @@ export default function AdminAlunosPage() {
           </div>
         )}
       </div>
+
+      <NewParentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          loadStudents();
+        }}
+      />
     </AdminShell>
   );
 }

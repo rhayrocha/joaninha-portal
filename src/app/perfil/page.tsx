@@ -1,33 +1,113 @@
 "use client";
 
+import React, { useState, useRef } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
-import { Edit2, MapPin, User, Mail, Phone, Hash, Calendar, Clock } from 'lucide-react';
+import { Edit2, MapPin, User, Mail, Phone, Hash, Calendar, Clock, Camera, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function PerfilPage() {
-  const { user, children: studentChildren } = useAuth();
+  const { user, children: studentChildren, updateAvatar } = useAuth();
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
   const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setToastMessage('Por favor, selecione um arquivo de imagem válido (JPG ou PNG).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setToastMessage('A imagem não pode ultrapassar 5MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setToastMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', user.id);
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.avatarUrl) {
+        updateAvatar(data.avatarUrl);
+        setToastMessage('Foto de perfil atualizada com sucesso!');
+      } else {
+        setToastMessage(data.error || 'Erro ao atualizar foto.');
+      }
+    } catch {
+      setToastMessage('Erro de conexão ao enviar foto.');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
+
   return (
     <AppShell title="Perfil">
       <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-8 animate-in">
         
+        {toastMessage && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <span>{toastMessage}</span>
+            </div>
+            <button onClick={() => setToastMessage(null)} className="text-emerald-700 hover:text-emerald-900 font-bold ml-4">✕</button>
+          </div>
+        )}
+
         <section className="card-elevated bg-white rounded-3xl overflow-hidden relative">
           <div className="h-32 bg-gradient-to-r from-joaninha-red to-joaninha-bordeaux"></div>
           
           <div className="px-6 sm:px-8 pb-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-end -mt-16 mb-8 gap-4 sm:gap-6 relative">
-              <div className="w-32 h-32 rounded-full border-4 border-white bg-joaninha-cream overflow-hidden flex items-center justify-center text-4xl font-display font-bold text-joaninha-gray-600 shadow-soft z-10">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  initials
-                )}
+              <div className="relative group/avatar">
+                <div className="w-32 h-32 rounded-full border-4 border-white bg-joaninha-cream overflow-hidden flex items-center justify-center text-4xl font-display font-bold text-joaninha-gray-600 shadow-soft z-10">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    initials
+                  )}
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full z-20">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  className="absolute bottom-1 right-1 z-20 p-2.5 bg-joaninha-red hover:bg-joaninha-bordeaux text-white rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 border-2 border-white"
+                  title="Alterar foto de perfil"
+                >
+                  <Camera size={16} />
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarSelect}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
+
               <div className="flex-1 text-center sm:text-left mb-2">
                 <h2 className="text-2xl font-display font-bold text-joaninha-black">{user.name}</h2>
                 <p className="text-joaninha-gray-500">Responsável Financeiro</p>
