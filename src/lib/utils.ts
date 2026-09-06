@@ -14,19 +14,46 @@ export function formatCurrency(value: number): string {
 }
 
 export function formatDate(dateStr: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(dateStr));
+  if (!dateStr) return "";
+  // Evita bug de deslocamento de fuso horário UTC (GMT-3) em strings 'YYYY-MM-DD'
+  const cleanDate = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+    const [year, month, day] = cleanDate.split("-");
+    return `${day}/${month}/${year}`;
+  }
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(dateStr));
+  } catch {
+    return dateStr;
+  }
 }
 
 export function formatDateLong(dateStr: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(dateStr));
+  if (!dateStr) return "";
+  const cleanDate = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+    const [year, month, day] = cleanDate.split("-").map(Number);
+    // Usar meio-dia local (12:00) garante que nenhum fuso horário retroceda ou avance o dia
+    const date = new Date(year, month - 1, day, 12, 0, 0);
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  }
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(dateStr));
+  } catch {
+    return dateStr;
+  }
 }
 
 export function getDocumentStatusConfig(status: DocumentStatus) {

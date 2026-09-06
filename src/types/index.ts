@@ -88,6 +88,7 @@ export interface Payment {
   barcode?: string;
   pixCode?: string;
   pixQrCodeData?: string;
+  isAsaas?: boolean;
 }
 
 export interface AdminUser {

@@ -49,9 +49,21 @@ export default function PaymentCard({ payment }: PaymentCardProps) {
               </p>
             </div>
           </div>
-          <span className={cn("badge px-2.5 py-1 rounded-full text-xs font-semibold shrink-0", statusConfig.color)}>
-            {statusConfig.label}
-          </span>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className={cn("badge px-2.5 py-1 rounded-full text-xs font-semibold shrink-0", statusConfig.color)}>
+              {statusConfig.label}
+            </span>
+            {payment.isAsaas ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded-md">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Asaas
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] font-normal text-gray-400 bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded-md">
+                Histórico
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Due date info */}

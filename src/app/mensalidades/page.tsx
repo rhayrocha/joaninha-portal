@@ -9,13 +9,15 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { FileText, Clock, CheckCircle, RefreshCw, Zap } from 'lucide-react';
 import type { Payment } from '@/types';
 
-type FilterType = 'all' | 'pending' | 'paid' | 'overdue';
+type FilterType = 'all' | 'pending' | 'paid' | 'overdue' | 'asaas';
 
 export default function MensalidadesPage() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [payments, setPayments] = useState<Payment[]>(mockPayments);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isGeneratingAsaas, setIsGeneratingAsaas] = useState(false);
   const [isAsaasLive, setIsAsaasLive] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   const fetchPayments = async () => {
     setIsSyncing(true);
@@ -37,6 +39,25 @@ export default function MensalidadesPage() {
     }
   };
 
+  const handleGenerateAsaas = async () => {
+    setIsGeneratingAsaas(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch('/api/payments/sync-asaas', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSyncMessage(data.message);
+        await fetchPayments();
+      } else {
+        setSyncMessage(data.error || 'Erro ao gerar cobranças no Asaas');
+      }
+    } catch {
+      setSyncMessage('Erro de conexão ao gerar cobranças no Asaas');
+    } finally {
+      setIsGeneratingAsaas(false);
+    }
+  };
+
   useEffect(() => {
     fetchPayments();
   }, []);
@@ -44,9 +65,11 @@ export default function MensalidadesPage() {
   const paidPayments = payments.filter(p => p.status === 'paid');
   const pendingPayments = payments.filter(p => p.status === 'pending');
   const overduePayments = payments.filter(p => p.status === 'overdue');
+  const asaasPayments = payments.filter(p => p.isAsaas);
 
   const filteredPayments = payments.filter(p => {
     if (filter === 'all') return true;
+    if (filter === 'asaas') return p.isAsaas;
     return p.status === filter;
   });
 
@@ -66,19 +89,45 @@ export default function MensalidadesPage() {
         
         {/* Sync Status Banner */}
         {isAsaasLive && (
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/70 text-xs text-emerald-800">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-semibold">Sincronização em Tempo Real com Asaas Sandbox Ativa</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/80 text-xs text-emerald-900 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+              <div>
+                <p className="font-semibold text-sm text-emerald-950">
+                  Sincronização com Asaas Sandbox Ativa
+                </p>
+                <p className="text-emerald-700 text-xs mt-0.5">
+                  <strong>{asaasPayments.length} cobranças reais no Asaas</strong> • {payments.length - asaasPayments.length} do histórico anterior
+                </p>
+              </div>
             </div>
-            <button 
-              onClick={fetchPayments}
-              disabled={isSyncing}
-              className="flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-900 transition-colors"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", isSyncing && "animate-spin")} />
-              <span>{isSyncing ? "Atualizando..." : "Atualizar Status"}</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                onClick={handleGenerateAsaas}
+                disabled={isGeneratingAsaas || isSyncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all text-xs disabled:opacity-50"
+                title="Gera cobranças no Asaas Sandbox para mensalidades pendentes"
+              >
+                <Zap className={cn("w-3.5 h-3.5", isGeneratingAsaas && "animate-spin")} />
+                <span>{isGeneratingAsaas ? "Gerando..." : "Gerar Restantes no Sandbox"}</span>
+              </button>
+              <button 
+                onClick={fetchPayments}
+                disabled={isSyncing}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100/50 font-medium transition-colors text-xs"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isSyncing && "animate-spin")} />
+                <span>{isSyncing ? "..." : "Atualizar"}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Sync Feedback Message */}
+        {syncMessage && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-center justify-between">
+            <span>{syncMessage}</span>
+            <button onClick={() => setSyncMessage(null)} className="text-blue-600 font-bold ml-2">✕</button>
           </div>
         )}
 
@@ -112,10 +161,11 @@ export default function MensalidadesPage() {
         {/* Filters */}
         <div className="flex overflow-x-auto gap-2 pb-2 custom-scrollbar">
           {[
-            { id: 'all', label: 'Todas' },
-            { id: 'pending', label: 'Pendentes' },
-            { id: 'paid', label: 'Pagas' },
-            { id: 'overdue', label: 'Vencidas' },
+            { id: 'all', label: 'Todas as Mensalidades' },
+            { id: 'pending', label: `Pendentes (${pendingPayments.length})` },
+            { id: 'paid', label: `Pagas (${paidPayments.length})` },
+            { id: 'overdue', label: `Vencidas (${overduePayments.length})` },
+            { id: 'asaas', label: `🟢 No Asaas (${asaasPayments.length})` },
           ].map(f => (
             <button
               key={f.id}
@@ -123,7 +173,7 @@ export default function MensalidadesPage() {
               className={cn(
                 "px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
                 filter === f.id
-                  ? "bg-joaninha-red text-white"
+                  ? (f.id === 'asaas' ? "bg-emerald-600 text-white" : "bg-joaninha-red text-white")
                   : "bg-white text-joaninha-gray-600 hover:bg-joaninha-gray-50 border border-joaninha-gray-200"
               )}
             >

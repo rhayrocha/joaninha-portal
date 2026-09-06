@@ -99,9 +99,14 @@ export default function PagamentoPage() {
           <p className="text-sm font-semibold text-joaninha-gray-500 uppercase tracking-wider mb-2">
             {payment.reference}
           </p>
-          <h1 className="text-4xl font-display font-bold text-joaninha-black mb-4">
-            {formatCurrency(payment.amount)}
+          <h1 className="text-4xl font-display font-bold text-joaninha-black mb-2">
+            {formatCurrency(payment.totalAmount || payment.amount)}
           </h1>
+          {payment.discount > 0 && payment.status !== 'overdue' && (
+            <p className="text-xs text-joaninha-green font-semibold mb-2">
+              Desconto de pontualidade aplicado: -{formatCurrency(payment.discount)}
+            </p>
+          )}
           <p className="text-joaninha-gray-600 font-medium">
             Vencimento: <span className="text-joaninha-black">{formatDateLong(payment.dueDate)}</span>
           </p>
