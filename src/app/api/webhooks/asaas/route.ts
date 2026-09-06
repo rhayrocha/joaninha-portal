@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,27 +23,45 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Webhook Asaas Sandbox] Evento recebido: ${event} para cobrança ${payment?.id}`);
 
-    // 2. Tratamento dos Eventos de Ciclo de Vida do Pagamento
-    switch (event) {
-      case 'PAYMENT_RECEIVED':
-      case 'PAYMENT_CONFIRMED':
-        console.log(`✅ [Pagamento Confirmado] Cobrança ${payment.id} no valor de R$ ${payment.value} foi liquidada via ${payment.billingType}!`);
-        // Aqui o banco de dados é atualizado para status: 'paid' e paid_at: payment.paymentDate
-        break;
+    // 2. Tratamento dos Eventos de Ciclo de Vida do Pagamento com Persistência no Supabase
+    try {
+      const supabase = getAdminClient();
 
-      case 'PAYMENT_OVERDUE':
-        console.log(`⚠️ [Pagamento Vencido] Cobrança ${payment.id} venceu sem liquidação.`);
-        // Aqui o banco de dados é atualizado para status: 'overdue'
-        break;
+      switch (event) {
+        case 'PAYMENT_RECEIVED':
+        case 'PAYMENT_CONFIRMED':
+          console.log(`✅ [Pagamento Confirmado] Cobrança ${payment.id} no valor de R$ ${payment.value} foi liquidada via ${payment.billingType}!`);
+          await supabase
+            .from('payments')
+            .update({
+              status: 'paid',
+              paid_at: payment.paymentDate || payment.clientPaymentDate || new Date().toISOString(),
+            })
+            .eq('asaas_payment_id', payment.id);
+          break;
 
-      case 'PAYMENT_DELETED':
-      case 'PAYMENT_REFUNDED':
-        console.log(`ℹ️ [Pagamento Cancelado/Estornado] Cobrança ${payment.id}`);
-        // Aqui o banco de dados é atualizado para status: 'cancelled'
-        break;
+        case 'PAYMENT_OVERDUE':
+          console.log(`⚠️ [Pagamento Vencido] Cobrança ${payment.id} venceu sem liquidação.`);
+          await supabase
+            .from('payments')
+            .update({ status: 'overdue' })
+            .eq('asaas_payment_id', payment.id);
+          break;
 
-      default:
-        console.log(`[Webhook Asaas] Evento informativo ignorado: ${event}`);
+        case 'PAYMENT_DELETED':
+        case 'PAYMENT_REFUNDED':
+          console.log(`ℹ️ [Pagamento Cancelado/Estornado] Cobrança ${payment.id}`);
+          await supabase
+            .from('payments')
+            .update({ status: 'cancelled' })
+            .eq('asaas_payment_id', payment.id);
+          break;
+
+        default:
+          console.log(`[Webhook Asaas] Evento informativo ignorado: ${event}`);
+      }
+    } catch (dbErr) {
+      console.warn('[Webhook Asaas] Aviso ao persistir no Supabase:', dbErr);
     }
 
     // Retorna 200 OK para confirmar ao Asaas que a mensagem foi recebida com sucesso

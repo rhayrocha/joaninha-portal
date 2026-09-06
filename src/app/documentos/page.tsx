@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import DocumentProgressBar from '@/components/documents/DocumentProgressBar';
 import DocumentCard from '@/components/documents/DocumentCard';
@@ -15,6 +15,28 @@ export default function DocumentosPage() {
 
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+
+  const fetchDocuments = async () => {
+    setIsLoadingDocs(true);
+    try {
+      const res = await fetch('/api/documents/list', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.documents && Array.isArray(data.documents)) {
+          setDocuments(data.documents);
+        }
+      }
+    } catch (err) {
+      console.error('[Documentos] Erro ao carregar documentos:', err);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
   const parentDocs = documents.filter(doc => doc.category === 'parent');
   const childDocs = documents.filter(doc => doc.category === 'child');
@@ -22,13 +44,45 @@ export default function DocumentosPage() {
   const requiredDocs = documents.filter(d => d.required);
   const completedDocs = requiredDocs.filter(d => d.status === 'approved' || d.status === 'under_review');
 
-  const handleUpload = (docId: string, _file: File) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.id === docId 
-        ? { ...doc, status: 'under_review' as const, uploadedAt: new Date().toISOString(), fileName: _file.name, fileSize: _file.size } 
-        : doc
+  const handleUpload = async (docId: string, file: File) => {
+    const doc = documents.find(d => d.id === docId);
+    if (!doc) return;
+
+    // Atualização otimista imediata na interface
+    setDocuments(prev => prev.map(d => 
+      d.id === docId 
+        ? { ...d, status: 'under_review' as const, uploadedAt: new Date().toISOString(), fileName: file.name, fileSize: file.size } 
+        : d
     ));
-    setUploadingDocId(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('documentId', docId);
+      formData.append('type', doc.type);
+      formData.append('label', doc.label);
+      formData.append('category', doc.category);
+      formData.append('studentId', mainChild?.id || 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22');
+      formData.append('parentId', user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
+
+      const res = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.document) {
+          setDocuments(prev => prev.map(d => 
+            d.id === docId ? { ...d, ...data.document } : d
+          ));
+        }
+      }
+    } catch (err) {
+      console.error('[Upload Document Error]:', err);
+    } finally {
+      setUploadingDocId(null);
+    }
   };
 
   const renderDocSection = (title: string, docs: Document[]) => (

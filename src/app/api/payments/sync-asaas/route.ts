@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { asaas } from '@/lib/asaas';
 import { mockPayments } from '@/data/mockPayments';
+import { getAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,6 +84,28 @@ export async function POST(req: Request) {
         discountDaysBeforeDue: 0,
         externalReference: payment.id,
       });
+
+      // Persiste também no Supabase
+      try {
+        const supabase = getAdminClient();
+        await supabase.from('payments').upsert({
+          parent_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+          student_id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22',
+          asaas_payment_id: newCharge.id,
+          asaas_customer_id: customer.id,
+          title: `Mensalidade - ${payment.reference}`,
+          description,
+          amount: newCharge.value,
+          discount_amount: payment.discount || 0,
+          final_amount: newCharge.value,
+          due_date: newCharge.dueDate,
+          status: newCharge.status === 'RECEIVED' ? 'paid' : 'pending',
+          billing_type: 'PIX',
+          invoice_url: newCharge.invoiceUrl,
+        }, { onConflict: 'asaas_payment_id' });
+      } catch (dbErr) {
+        console.warn('[Sync Asaas] Aviso ao salvar payment no Supabase:', dbErr);
+      }
 
       created.push({
         id: newCharge.id,
