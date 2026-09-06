@@ -36,13 +36,24 @@ export async function GET() {
 
     // Clona os pagamentos base e mescla com os pagamentos reais do Asaas
     const mergedPayments: Payment[] = mockPayments.map((mock) => {
-      // Procura se existe uma cobrança no Asaas para este mesmo mês de vencimento (ex: 2026-10)
-      const mockMonth = mock.dueDate.slice(0, 7); // ex: '2026-10'
-      const asaasMatch = asaasPayments.find((ap: any) => ap.dueDate && ap.dueDate.startsWith(mockMonth));
+      const refMonth = mock.reference.split('/')[0].toLowerCase();
+      const mockMonth = mock.dueDate.slice(0, 7);
+
+      // Prioridade 1: Nome do mês na descrição (agosto, setembro, outubro)
+      // Prioridade 2: Mês do vencimento
+      let asaasMatch = asaasPayments.find((ap: any) => 
+        (ap.description || '').toLowerCase().includes(refMonth)
+      );
+
+      if (!asaasMatch) {
+        asaasMatch = asaasPayments.find((ap: any) => 
+          ap.dueDate && ap.dueDate.startsWith(mockMonth)
+        );
+      }
 
       if (asaasMatch) {
         const isPaid = asaasMatch.status === 'RECEIVED' || asaasMatch.status === 'CONFIRMED';
-        const isOverdue = asaasMatch.status === 'OVERDUE';
+        const isOverdue = asaasMatch.status === 'OVERDUE' || (mock.status === 'overdue' && !isPaid);
 
         return {
           ...mock,

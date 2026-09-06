@@ -23,7 +23,6 @@ export default function PagamentoPage() {
 
   useEffect(() => {
     async function loadPayment() {
-      if (payment) return;
       try {
         setIsLoading(true);
         const res = await fetch('/api/payments/list', { cache: 'no-store' });
@@ -32,6 +31,19 @@ export default function PagamentoPage() {
           if (data.payments && Array.isArray(data.payments)) {
             const found = data.payments.find((p: Payment) => p.id === paymentId);
             if (found) {
+              if (found.id.startsWith('pay_') && (!found.pixCode || found.pixCode.includes('seed'))) {
+                try {
+                  const pixRes = await fetch(`/api/payments/${found.id}/pix`);
+                  if (pixRes.ok) {
+                    const pixData = await pixRes.json();
+                    if (pixData.payload) {
+                      found.pixCode = pixData.payload;
+                    }
+                  }
+                } catch (e) {
+                  console.warn('[Pagamento] Falha ao obter pix em tempo real:', e);
+                }
+              }
               setPayment(found);
             }
           }
@@ -44,7 +56,7 @@ export default function PagamentoPage() {
     }
 
     loadPayment();
-  }, [paymentId, payment]);
+  }, [paymentId]);
 
   if (isLoading) {
     return (
