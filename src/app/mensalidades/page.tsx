@@ -1,23 +1,51 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import PaymentCard from '@/components/payments/PaymentCard';
 import AnnualPaymentCard from '@/components/payments/AnnualPaymentCard';
 import { mockPayments } from '@/data/mockPayments';
 import { formatCurrency, cn } from '@/lib/utils';
-import { FileText, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, RefreshCw, Zap } from 'lucide-react';
+import type { Payment } from '@/types';
 
 type FilterType = 'all' | 'pending' | 'paid' | 'overdue';
 
 export default function MensalidadesPage() {
   const [filter, setFilter] = useState<FilterType>('all');
-  
-  const paidPayments = mockPayments.filter(p => p.status === 'paid');
-  const pendingPayments = mockPayments.filter(p => p.status === 'pending');
-  const overduePayments = mockPayments.filter(p => p.status === 'overdue');
+  const [payments, setPayments] = useState<Payment[]>(mockPayments);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isAsaasLive, setIsAsaasLive] = useState(false);
 
-  const filteredPayments = mockPayments.filter(p => {
+  const fetchPayments = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/payments/list', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.payments && Array.isArray(data.payments)) {
+          setPayments(data.payments);
+          if (data.source === 'asaas_live') {
+            setIsAsaasLive(true);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Mensalidades] Erro ao sincronizar com Asaas:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const paidPayments = payments.filter(p => p.status === 'paid');
+  const pendingPayments = payments.filter(p => p.status === 'pending');
+  const overduePayments = payments.filter(p => p.status === 'overdue');
+
+  const filteredPayments = payments.filter(p => {
     if (filter === 'all') return true;
     return p.status === filter;
   });
@@ -30,12 +58,30 @@ export default function MensalidadesPage() {
     return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
   });
 
-  const hasAnnualPayment = mockPayments.some(p => p.paymentPlan === 'annual');
+  const hasAnnualPayment = payments.some(p => p.paymentPlan === 'annual');
 
   return (
     <AppShell title="Mensalidades">
       <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto animate-in">
         
+        {/* Sync Status Banner */}
+        {isAsaasLive && (
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/70 text-xs text-emerald-800">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-semibold">Sincronização em Tempo Real com Asaas Sandbox Ativa</span>
+            </div>
+            <button 
+              onClick={fetchPayments}
+              disabled={isSyncing}
+              className="flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-900 transition-colors"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", isSyncing && "animate-spin")} />
+              <span>{isSyncing ? "Atualizando..." : "Atualizar Status"}</span>
+            </button>
+          </div>
+        )}
+
         {!hasAnnualPayment && <AnnualPaymentCard />}
 
         {/* Summary Cards */}

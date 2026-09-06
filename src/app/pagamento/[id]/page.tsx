@@ -1,22 +1,61 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AppShell from '@/components/layout/AppShell';
 import BoletoView from '@/components/payments/BoletoView';
 import PixView from '@/components/payments/PixView';
 import { mockPayments } from '@/data/mockPayments';
 import { formatCurrency, formatDateLong, cn } from '@/lib/utils';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
-import type { PaymentMethod } from '@/types';
+import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import type { Payment, PaymentMethod } from '@/types';
 
 export default function PagamentoPage() {
   const params = useParams();
   const router = useRouter();
   const paymentId = params.id as string;
   
-  const payment = mockPayments.find(p => p.id === paymentId);
+  const [payment, setPayment] = useState<Payment | null>(() => {
+    return mockPayments.find(p => p.id === paymentId) || null;
+  });
+  const [isLoading, setIsLoading] = useState(!payment);
   const [method, setMethod] = useState<PaymentMethod>('pix');
+
+  useEffect(() => {
+    async function loadPayment() {
+      if (payment) return;
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/payments/list', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.payments && Array.isArray(data.payments)) {
+            const found = data.payments.find((p: Payment) => p.id === paymentId);
+            if (found) {
+              setPayment(found);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Pagamento] Erro ao buscar pagamento:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadPayment();
+  }, [paymentId, payment]);
+
+  if (isLoading) {
+    return (
+      <AppShell title="Carregando Pagamento">
+        <div className="p-12 flex flex-col items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-10 h-10 text-joaninha-bordeaux animate-spin mb-3" />
+          <p className="text-sm font-medium text-stone-600">Consultando fatura no Asaas...</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!payment) {
     return (
