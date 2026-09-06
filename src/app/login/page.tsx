@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,11 +26,12 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      setErrorMessage(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setIsLoading(false);
     }
@@ -47,9 +49,15 @@ export default function LoginPage() {
         <h1 className="text-2xl font-display font-bold text-center text-joaninha-black mb-2">
           Bem-vindo ao Portal
         </h1>
-        <p className="text-center text-joaninha-gray-500 mb-8 text-sm">
+        <p className="text-center text-joaninha-gray-500 mb-6 text-sm">
           Acesse as informações do seu filho(a)
         </p>
+
+        {errorMessage && (
+          <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+            {errorMessage}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -72,9 +80,9 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-joaninha-black" htmlFor="password">
                 Senha
               </label>
-              <button type="button" className="text-xs text-joaninha-red hover:underline font-medium">
-                Esqueci minha senha
-              </button>
+              <span className="text-xs text-joaninha-gray-400">
+                Acesso seguro Supabase
+              </span>
             </div>
             <div className="relative">
               <input
@@ -99,14 +107,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary w-full py-3 flex items-center justify-center mt-2"
+            className="btn-primary w-full py-3 flex items-center justify-center mt-2 font-semibold shadow-sm"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Entrar"}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Entrar no Portal"}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-joaninha-gray-400">
-          Demo: use qualquer e-mail e senha
+        <div className="mt-8 pt-4 border-t border-gray-100 text-center text-xs text-joaninha-gray-400">
+          Dúvidas no acesso? Entre em contato com a secretaria da escola.
         </div>
       </div>
     </div>

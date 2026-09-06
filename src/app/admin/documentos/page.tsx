@@ -15,6 +15,28 @@ export default function AdminDocumentosPage() {
   const [documents, setDocuments] = useState<DocType[]>(allDocuments);
   const [activeTab, setActiveTab] = useState<Tab>('Em Análise');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadDocuments = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/documents/list', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.documents && data.documents.length > 0) {
+          setDocuments(data.documents);
+        }
+      }
+    } catch (err) {
+      console.error('[Admin Documentos] Erro ao carregar documentos do Supabase:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadDocuments();
+  }, []);
 
   const stats = useMemo(() => {
     return {
@@ -38,22 +60,48 @@ export default function AdminDocumentosPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleApprove = (id: string) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.id === id 
-        ? { ...doc, status: 'approved', reviewedAt: new Date().toISOString(), reviewedBy: 'Admin' } 
-        : doc
-    ));
-    showToast('Documento aprovado com sucesso.');
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await fetch('/api/admin/documents/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId: id, action: 'approved' }),
+      });
+      if (res.ok) {
+        setDocuments(prev => prev.map(doc => 
+          doc.id === id 
+            ? { ...doc, status: 'approved', reviewedAt: new Date().toISOString(), reviewedBy: 'Admin' } 
+            : doc
+        ));
+        showToast('Documento aprovado no Supabase com sucesso!');
+      } else {
+        showToast('Erro ao aprovar documento no banco de dados.');
+      }
+    } catch {
+      showToast('Erro de conexão ao aprovar documento.');
+    }
   };
 
-  const handleReject = (id: string, reason: string) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.id === id 
-        ? { ...doc, status: 'rejected', rejectionReason: reason, reviewedAt: new Date().toISOString(), reviewedBy: 'Admin' } 
-        : doc
-    ));
-    showToast('Documento rejeitado com sucesso.');
+  const handleReject = async (id: string, reason: string) => {
+    try {
+      const res = await fetch('/api/admin/documents/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId: id, action: 'rejected', rejectionReason: reason }),
+      });
+      if (res.ok) {
+        setDocuments(prev => prev.map(doc => 
+          doc.id === id 
+            ? { ...doc, status: 'rejected', rejectionReason: reason, reviewedAt: new Date().toISOString(), reviewedBy: 'Admin' } 
+            : doc
+        ));
+        showToast('Documento rejeitado e registrado no Supabase!');
+      } else {
+        showToast('Erro ao rejeitar documento.');
+      }
+    } catch {
+      showToast('Erro de conexão ao rejeitar documento.');
+    }
   };
 
   const getParentName = (doc: DocType) => {
@@ -157,9 +205,9 @@ export default function AdminDocumentosPage() {
             <DocumentReviewCard
               key={doc.id}
               document={doc}
-              parentName={getParentName(doc)}
-              childName={getStudentName(doc)}
-              avatarUrl={getParentAvatar(doc)}
+              parentName={(doc as any).parentName || getParentName(doc)}
+              childName={(doc as any).childName || getStudentName(doc)}
+              avatarUrl={(doc as any).avatarUrl || getParentAvatar(doc)}
               onApprove={(id) => handleApprove(id)}
               onReject={(id, reason) => handleReject(id, reason)}
             />
