@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Webhook Oficial do Asaas para Notificações de Pagamentos em Tempo Real
  * Documentação: https://docs.asaas.com/reference/webhook-para-cobrancas
@@ -7,12 +9,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     // 1. Verificação de Token de Autenticação do Webhook
-    const webhookToken = req.headers.get('asaas-access-token');
+    const webhookToken = req.headers.get('asaas-access-token') || req.headers.get('access_token');
     const expectedToken = process.env.ASAAS_WEBHOOK_SECRET;
 
     if (expectedToken && webhookToken !== expectedToken) {
       console.warn('[Webhook Asaas] Tentativa de acesso não autorizada: Token inválido');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Token inválido' }, { status: 401 });
     }
 
     const body = await req.json();
