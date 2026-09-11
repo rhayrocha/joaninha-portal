@@ -20,7 +20,8 @@ export default function DocumentosPage() {
   const fetchDocuments = async () => {
     setIsLoadingDocs(true);
     try {
-      const res = await fetch('/api/documents/list', { cache: 'no-store' });
+      const url = user?.id ? `/api/documents/list?parentId=${user.id}` : '/api/documents/list';
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.documents && Array.isArray(data.documents)) {
@@ -36,7 +37,7 @@ export default function DocumentosPage() {
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [user?.id]);
 
   const parentDocs = documents.filter(doc => doc.category === 'parent');
   const childDocs = documents.filter(doc => doc.category === 'child');

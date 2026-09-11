@@ -4,15 +4,21 @@ import React, { useState, useEffect } from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import ClassSection from '@/components/admin/ClassSection';
 import NewParentModal from '@/components/admin/NewParentModal';
+import EditStudentModal from '@/components/admin/EditStudentModal';
 import { allStudents as initialStudents, parentInfo as initialParentInfo, CLASS_NAMES } from '@/data/mockStudents';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
+import type { Child } from '@/types';
 
 export default function AdminAlunosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState(initialStudents);
   const [parentMap, setParentMap] = useState(initialParentInfo);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Child | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedNotice, setSeedNotice] = useState<string | null>(null);
 
   const loadStudents = async () => {
     setIsLoading(true);
@@ -34,6 +40,29 @@ export default function AdminAlunosPage() {
     }
   };
 
+  const handleSeed = async () => {
+    if (!confirm('Deseja popular o banco Supabase com 3 famílias completas de teste (Maria, Carlos e Fernanda)?')) {
+      return;
+    }
+    setIsSeeding(true);
+    setSeedNotice(null);
+    try {
+      const res = await fetch('/api/admin/seed', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSeedNotice('✅ 3 Famílias de teste criadas no Supabase com sucesso!');
+        await loadStudents();
+      } else {
+        setSeedNotice('Erro: ' + (data.error || 'Falha ao popular banco'));
+      }
+    } catch {
+      setSeedNotice('Erro de conexão ao popular banco');
+    } finally {
+      setIsSeeding(false);
+      setTimeout(() => setSeedNotice(null), 5000);
+    }
+  };
+
   useEffect(() => {
     loadStudents();
   }, []);
@@ -45,6 +74,16 @@ export default function AdminAlunosPage() {
 
   return (
     <AdminShell title="Alunos" subtitle="Gestão de turmas e matrículas">
+      {seedNotice && (
+        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <span>{seedNotice}</span>
+          </div>
+          <button onClick={() => setSeedNotice(null)} className="text-emerald-700 hover:text-emerald-900 font-bold ml-4">✕</button>
+        </div>
+      )}
+
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="relative w-full max-w-md">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -58,11 +97,22 @@ export default function AdminAlunosPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="rounded-xl bg-white px-4 py-2.5 shadow-sm border border-joaninha-gray-100 text-sm">
             <span className="font-medium text-joaninha-gray-500">Total de Alunos:</span>
             <span className="ml-2 font-bold text-joaninha-black">{students.length}</span>
           </div>
+
+          <button
+            type="button"
+            onClick={handleSeed}
+            disabled={isSeeding}
+            className="btn-secondary py-2.5 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm text-joaninha-bordeaux border-joaninha-bordeaux/20 hover:bg-joaninha-cream/50"
+            title="Popula 3 famílias completas de teste no Supabase"
+          >
+            {isSeeding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-500" />}
+            <span>{isSeeding ? 'Criando...' : 'Popular Dados de Teste'}</span>
+          </button>
 
           <button
             type="button"
@@ -87,6 +137,10 @@ export default function AdminAlunosPage() {
               className={className}
               students={studentsInClass}
               parentInfoMap={parentMap}
+              onEditStudent={(student) => {
+                setEditingStudent(student);
+                setIsEditModalOpen(true);
+              }}
             />
           );
         })}
@@ -105,6 +159,19 @@ export default function AdminAlunosPage() {
         onSuccess={() => {
           loadStudents();
         }}
+      />
+
+      <EditStudentModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingStudent(null);
+        }}
+        onSuccess={() => {
+          loadStudents();
+        }}
+        student={editingStudent}
+        parentInfo={editingStudent ? parentMap[editingStudent.parentId] : undefined}
       />
     </AdminShell>
   );

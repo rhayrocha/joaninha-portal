@@ -10,9 +10,10 @@ interface ClassSectionProps {
   className: string;
   students: Child[];
   parentInfoMap: Record<string, { name: string; phone: string; avatarUrl?: string }>;
+  onEditStudent?: (student: Child) => void;
 }
 
-export default function ClassSection({ className, students, parentInfoMap }: ClassSectionProps) {
+export default function ClassSection({ className, students, parentInfoMap, onEditStudent }: ClassSectionProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   if (!students || students.length === 0) return null;
@@ -51,6 +52,7 @@ export default function ClassSection({ className, students, parentInfoMap }: Cla
                 parentName={parent?.name || 'Não informado'}
                 parentPhone={parent?.phone || 'Não informado'}
                 parentAvatarUrl={parent?.avatarUrl}
+                onEdit={onEditStudent}
               />
             );
           })}

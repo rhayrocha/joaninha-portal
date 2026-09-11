@@ -8,24 +8,25 @@ import PixView from '@/components/payments/PixView';
 import { mockPayments } from '@/data/mockPayments';
 import { formatCurrency, formatDateLong, cn } from '@/lib/utils';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Payment, PaymentMethod } from '@/types';
 
 export default function PagamentoPage() {
   const params = useParams();
   const router = useRouter();
   const paymentId = params.id as string;
+  const { user } = useAuth();
   
-  const [payment, setPayment] = useState<Payment | null>(() => {
-    return mockPayments.find(p => p.id === paymentId) || null;
-  });
-  const [isLoading, setIsLoading] = useState(!payment);
+  const [payment, setPayment] = useState<Payment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [method, setMethod] = useState<PaymentMethod>('pix');
 
   useEffect(() => {
     async function loadPayment() {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/payments/list', { cache: 'no-store' });
+        const url = user?.id ? `/api/payments/list?parentId=${user.id}` : '/api/payments/list';
+        const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.payments && Array.isArray(data.payments)) {
@@ -56,7 +57,7 @@ export default function PagamentoPage() {
     }
 
     loadPayment();
-  }, [paymentId]);
+  }, [paymentId, user?.id]);
 
   if (isLoading) {
     return (

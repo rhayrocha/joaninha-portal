@@ -1,132 +1,156 @@
 import { NextResponse } from 'next/server';
 import { asaas } from '@/lib/asaas';
-import { mockPayments } from '@/data/mockPayments';
 import { getAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const apiKey = process.env.ASAAS_API_KEY;
-  const env = process.env.ASAAS_ENVIRONMENT || 'sandbox';
 
   if (!apiKey) {
     return NextResponse.json({ error: 'ASAAS_API_KEY não configurada' }, { status: 400 });
   }
 
   try {
-    const baseUrl = env === 'production'
-      ? 'https://api.asaas.com/v3'
-      : 'https://sandbox.asaas.com/api/v3';
-
-    // 1. Obter ou garantir o cliente Maria Clara Santos no Asaas
-    const customer = await asaas.getOrCreateCustomer({
-      name: "Maria Clara Santos (Mãe do Pedro)",
-      cpfCnpj: "456.789.123-00",
-      email: "maria.santos@exemplo.com.br",
-      mobilePhone: "11987654321",
-      externalReference: "parent_001",
-    });
-
-    // 2. Buscar pagamentos existentes no Asaas
-    const listRes = await fetch(`${baseUrl}/payments?limit=100`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': apiKey,
-      },
-      cache: 'no-store',
-    });
-
-    if (!listRes.ok) {
-      throw new Error('Falha ao consultar cobranças existentes no Asaas');
+    let parentId: string | null = null;
+    try {
+      const body = await req.json();
+      parentId = body.parentId || null;
+    } catch {
+      // Sem body JSON
     }
 
-    const asaasData = await listRes.json();
-    const existingPayments = asaasData.data || [];
+    const supabase = getAdminClient();
 
-    // 3. Identificar quais mensalidades do mock ainda NÃO estão no Asaas
+    // Se nenhum parentId foi passado, busca a primeira família cadastrada
+    if (!parentId) {
+      const { data: firstParent } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'parent')
+        .limit(1)
+        .single();
+      
+      parentId = firstParent?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    }
+
+    // 1. Busca os dados do responsável e do(s) aluno(s) no Supabase
+    const { data: parentProfile, error: parentError } = await supabase
+      .from('profiles')
+      .select('*, students(*)')
+      .eq('id', parentId)
+      .single();
+
+    if (parentError || !parentProfile) {
+      return NextResponse.json({ error: 'Responsável não encontrado no sistema' }, { status: 404 });
+    }
+
+    const student = parentProfile.students && parentProfile.students.length > 0
+      ? parentProfile.students[0]
+      : { id: null, full_name: 'Aluno(a)' };
+
+    // 2. Garante o cliente no Asaas
+    const customer = await asaas.getOrCreateCustomer({
+      name: `${parentProfile.full_name} (Resp. ${student.full_name})`,
+      cpfCnpj: parentProfile.cpf || '456.789.123-00',
+      email: parentProfile.email,
+      mobilePhone: parentProfile.phone || '11987654321',
+      externalReference: parentProfile.id,
+    });
+
+    // 3. Define as mensalidades a serem geradas (Setembro e Outubro)
+    const targetMonths = [
+      {
+        ref: 'Setembro/2026',
+        dueDate: '2026-09-15',
+        amount: 2200,
+        discount: 100,
+        status: 'pending',
+      },
+      {
+        ref: 'Outubro/2026',
+        dueDate: '2026-10-10',
+        amount: 2200,
+        discount: 100,
+        status: 'pending',
+      }
+    ];
+
     const todayStr = new Date().toISOString().split('T')[0];
     const created: any[] = [];
-    const skipped: any[] = [];
 
-    // Focar nas cobranças de Pedro Henrique
-    const targetPayments = mockPayments.filter(p => p.childName.includes('Pedro'));
-
-    for (const payment of targetPayments) {
-      const refMonth = payment.reference.split('/')[0].toLowerCase();
-      
-      const alreadyExists = existingPayments.some((ap: any) => 
-        (ap.description || '').toLowerCase().includes(refMonth)
-      );
-
-      if (alreadyExists) {
-        skipped.push({ reference: payment.reference, reason: 'Já existe no Asaas' });
-        continue;
-      }
-
-      // Se a data de vencimento for no passado, o Asaas recusa. Ajustamos para hoje + 2 dias se vencido
-      let dueDate = payment.dueDate;
+    for (const item of targetMonths) {
+      let dueDate = item.dueDate;
       if (dueDate < todayStr) {
-        // Vencimento ajustado para D+2
-        const targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() + 2);
-        dueDate = targetDate.toISOString().split('T')[0];
+        const d = new Date();
+        d.setDate(d.getDate() + 5);
+        dueDate = d.toISOString().split('T')[0];
       }
 
-      const description = `Mensalidade Escolar - ${payment.reference} - ${payment.childName}`;
+      const description = `Mensalidade Escolar - ${item.ref} - ${student.full_name}`;
 
+      // Cria a cobrança no Asaas
       const newCharge = await asaas.createPayment({
         customerId: customer.id,
-        value: payment.amount,
+        value: item.amount,
         dueDate,
         description,
-        billingType: 'UNDEFINED',
-        discountValue: payment.discount > 0 ? payment.discount : undefined,
+        billingType: 'PIX',
+        discountValue: item.discount,
         discountDaysBeforeDue: 0,
-        externalReference: payment.id,
+        externalReference: `${parentId}_${item.ref}`,
       });
 
-      // Persiste também no Supabase
+      // Tenta obter o QR Code do Pix imediatamente
+      let pixQrCode = '';
+      let pixImage = '';
       try {
-        const supabase = getAdminClient();
-        await supabase.from('payments').upsert({
-          parent_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-          student_id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22',
-          asaas_payment_id: newCharge.id,
-          asaas_customer_id: customer.id,
-          title: `Mensalidade - ${payment.reference}`,
-          description,
-          amount: newCharge.value,
-          discount_amount: payment.discount || 0,
-          final_amount: newCharge.value,
-          due_date: newCharge.dueDate,
-          status: newCharge.status === 'RECEIVED' ? 'paid' : 'pending',
-          billing_type: 'PIX',
-          invoice_url: newCharge.invoiceUrl,
-        }, { onConflict: 'asaas_payment_id' });
-      } catch (dbErr) {
-        console.warn('[Sync Asaas] Aviso ao salvar payment no Supabase:', dbErr);
+        const pixData = await asaas.getPixQrCode(newCharge.id);
+        pixQrCode = pixData.payload || '';
+        pixImage = pixData.encodedImage || '';
+      } catch (pixErr) {
+        console.warn('[Sync Asaas] Não foi possível obter Pix imediato:', pixErr);
       }
+
+      // Salva no Supabase vinculado ao responsável e aluno
+      await supabase.from('payments').upsert({
+        parent_id: parentId,
+        student_id: student.id,
+        asaas_payment_id: newCharge.id,
+        asaas_customer_id: customer.id,
+        title: `Mensalidade - ${item.ref}`,
+        description,
+        amount: item.amount,
+        discount_amount: item.discount,
+        final_amount: item.amount - item.discount,
+        due_date: dueDate,
+        status: 'pending',
+        billing_type: 'PIX',
+        invoice_url: newCharge.invoiceUrl,
+        pix_copy_paste: pixQrCode || null,
+        pix_qr_code_image: pixImage || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'asaas_payment_id' });
 
       created.push({
         id: newCharge.id,
-        reference: payment.reference,
-        value: newCharge.value,
-        dueDate: newCharge.dueDate,
-        status: newCharge.status,
+        reference: item.ref,
+        studentName: student.full_name,
+        value: item.amount,
+        dueDate,
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: `${created.length} cobrança(s) gerada(s) com sucesso no Asaas Sandbox!`,
+      message: `${created.length} mensalidade(s) gerada(s) no Asaas Sandbox para ${parentProfile.full_name}!`,
+      customer: customer.name,
       created,
-      skipped,
-      totalAsaasNow: existingPayments.length + created.length,
     });
   } catch (error: any) {
-    console.error('[API Sync Asaas] Erro:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Erro ao sincronizar com Asaas' 
+    console.error('[API Sync Asaas Error]:', error);
+    return NextResponse.json({
+      error: error.message || 'Erro ao sincronizar cobranças com Asaas',
     }, { status: 500 });
   }
 }

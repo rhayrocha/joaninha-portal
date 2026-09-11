@@ -45,10 +45,8 @@ export async function GET() {
       }
     });
 
-    // Se houver alunos no Supabase, inclui os do banco e complementa com as turmas
-    const finalStudents = mappedStudents.length > 0
-      ? [...mappedStudents, ...allStudents.filter(m => !mappedStudents.some(s => s.name === m.name))]
-      : allStudents;
+    // Se houver alunos no Supabase, usa estritamente os alunos reais do banco
+    const finalStudents = mappedStudents.length > 0 ? mappedStudents : allStudents;
 
     return NextResponse.json({
       students: finalStudents,

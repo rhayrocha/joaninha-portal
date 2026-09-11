@@ -1,141 +1,95 @@
 import { NextResponse } from 'next/server';
-import { mockPayments } from '@/data/mockPayments';
+import { getAdminClient } from '@/lib/supabase/admin';
+import { mockPayments, allPayments } from '@/data/mockPayments';
 import type { Payment } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const apiKey = process.env.ASAAS_API_KEY;
-  const env = process.env.ASAAS_ENVIRONMENT || 'sandbox';
-
-  // Se não houver chave do Asaas, retorna os dados base
-  if (!apiKey) {
-    return NextResponse.json({ payments: mockPayments, source: 'mock' });
-  }
-
+export async function GET(req: Request) {
   try {
-    const baseUrl = env === 'production'
-      ? 'https://api.asaas.com/v3'
-      : 'https://sandbox.asaas.com/api/v3';
+    const { searchParams } = new URL(req.url);
+    const parentId = searchParams.get('parentId');
 
-    const res = await fetch(`${baseUrl}/payments?limit=50`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': apiKey,
-      },
-      cache: 'no-store',
-    });
+    const supabase = getAdminClient();
 
-    if (!res.ok) {
-      console.warn('[API Payments List] Falha ao consultar Asaas, usando fallback');
-      return NextResponse.json({ payments: mockPayments, source: 'mock_fallback' });
+    let query = supabase
+      .from('payments')
+      .select('*, students:student_id(full_name, class_name), profiles:parent_id(full_name)');
+
+    if (parentId) {
+      query = query.eq('parent_id', parentId).order('due_date', { ascending: true });
+    } else {
+      query = query.order('due_date', { ascending: false });
     }
 
-    const asaasData = await res.json();
-    const asaasPayments = asaasData.data || [];
-    const matchedAsaasIds = new Set<string>();
+    const { data: dbPayments, error } = await query;
 
-    // Clona os pagamentos base e mescla com os pagamentos reais do Asaas
-    const mergedPayments: Payment[] = mockPayments.map((mock) => {
-      const refMonth = mock.reference.split('/')[0].toLowerCase();
-      const mockMonth = mock.dueDate.slice(0, 7);
-
-      // Prioridade 1: Nome do mês na descrição (agosto, setembro, outubro)
-      // Prioridade 2: Mês do vencimento
-      let asaasMatch = asaasPayments.find((ap: any) => 
-        !matchedAsaasIds.has(ap.id) && (ap.description || '').toLowerCase().includes(refMonth)
-      );
-
-      if (!asaasMatch) {
-        asaasMatch = asaasPayments.find((ap: any) => 
-          !matchedAsaasIds.has(ap.id) && ap.dueDate && ap.dueDate.startsWith(mockMonth)
-        );
-      }
-
-      if (asaasMatch) {
-        matchedAsaasIds.add(asaasMatch.id);
-        const isPaid = asaasMatch.status === 'RECEIVED' || asaasMatch.status === 'CONFIRMED';
-        const isOverdue = asaasMatch.status === 'OVERDUE';
-        const discountVal = asaasMatch.discount?.value ?? (mock.discount || 0);
-        const fineVal = asaasMatch.fine?.value ?? (mock.fine || 0);
-
-        // Se tem desconto e não está vencido, valor a pagar é líquido; se pago, o valor pago
-        let calculatedTotal = asaasMatch.value;
-        if (discountVal > 0 && !isOverdue && !isPaid) {
-          calculatedTotal = Math.max(0, asaasMatch.value - discountVal);
-        } else if (isOverdue && fineVal > 0) {
-          calculatedTotal = asaasMatch.value + fineVal;
-        }
+    if (!error && dbPayments && dbPayments.length > 0) {
+      const mappedPayments: Payment[] = dbPayments.map((p: any) => {
+        const amount = Number(p.amount || 0);
+        const discount = Number(p.discount_amount || 0);
+        const total = Number(p.final_amount || amount);
 
         return {
-          ...mock,
-          id: asaasMatch.id,
-          dueDate: asaasMatch.dueDate || mock.dueDate,
-          amount: asaasMatch.value,
-          discount: discountVal,
-          fine: fineVal,
-          totalAmount: calculatedTotal,
-          status: isPaid ? ('paid' as const) : isOverdue ? ('overdue' as const) : ('pending' as const),
-          paidAt: isPaid ? (asaasMatch.paymentDate || asaasMatch.clientPaymentDate || new Date().toISOString()) : undefined,
-          paidAmount: isPaid ? (asaasMatch.netValue || asaasMatch.value) : undefined,
-          barcode: asaasMatch.identificationField || mock.barcode,
-          pixCode: asaasMatch.pixQrCode || mock.pixCode,
-          pixQrCodeData: asaasMatch.pixQrCode || mock.pixQrCodeData,
-          isAsaas: true,
+          id: p.asaas_payment_id || p.id,
+          childId: p.student_id || '',
+          childName: p.students?.full_name || 'Aluno(a)',
+          parentName: p.profiles?.full_name || '',
+          reference: p.title || `Mensalidade ${p.due_date}`,
+          dueDate: p.due_date,
+          amount,
+          discount,
+          fine: 0,
+          totalAmount: total,
+          status: p.status as 'paid' | 'pending' | 'overdue' | 'cancelled',
+          paymentPlan: p.billing_type === 'ANNUAL' ? 'annual' : 'monthly',
+          paidAt: p.paid_at || undefined,
+          paidAmount: p.status === 'paid' ? total : undefined,
+          barcode: p.invoice_url || undefined,
+          pixCode: p.pix_copy_paste || undefined,
+          pixQrCodeData: p.pix_qr_code_image || undefined,
+          isAsaas: !!p.asaas_payment_id,
         };
-      }
+      });
 
-      return {
-        ...mock,
-        isAsaas: false,
-      };
-    });
-
-    // Inclui eventuais cobranças extras que existam no Asaas e não estejam no mock
-    const extraAsaasPayments = asaasPayments.filter((ap: any) => !matchedAsaasIds.has(ap.id));
-    for (const ap of extraAsaasPayments) {
-      const isPaid = ap.status === 'RECEIVED' || ap.status === 'CONFIRMED';
-      const isOverdue = ap.status === 'OVERDUE';
-      const discountVal = ap.discount?.value || 0;
-      const fineVal = ap.fine?.value || 0;
-
-      let calculatedTotal = ap.value;
-      if (discountVal > 0 && !isOverdue && !isPaid) {
-        calculatedTotal = Math.max(0, ap.value - discountVal);
-      } else if (isOverdue && fineVal > 0) {
-        calculatedTotal = ap.value + fineVal;
-      }
-
-      mergedPayments.push({
-        id: ap.id,
-        childId: 'child_001',
-        childName: 'Pedro Henrique Santos',
-        parentName: 'Maria Clara Santos',
-        reference: ap.description || `Mensalidade ${ap.dueDate}`,
-        dueDate: ap.dueDate,
-        amount: ap.value,
-        discount: discountVal,
-        fine: fineVal,
-        totalAmount: calculatedTotal,
-        status: isPaid ? ('paid' as const) : isOverdue ? ('overdue' as const) : ('pending' as const),
-        paymentPlan: 'monthly',
-        paidAt: isPaid ? (ap.paymentDate || ap.clientPaymentDate) : undefined,
-        paidAmount: isPaid ? ap.value : undefined,
-        barcode: ap.identificationField,
-        pixCode: ap.pixQrCode,
-        pixQrCodeData: ap.pixQrCode,
-        isAsaas: true,
+      return NextResponse.json({
+        payments: mappedPayments,
+        source: 'supabase_live',
+        count: mappedPayments.length,
       });
     }
 
+    // Se informou parentId e não tem pagamentos no banco:
+    if (parentId) {
+      // Se for a conta demonstrativa inicial da Maria Santos e ainda não semeada no banco
+      if (parentId === 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11') {
+        return NextResponse.json({
+          payments: mockPayments,
+          source: 'mock_demo',
+          count: mockPayments.length,
+        });
+      }
+
+      // Para qualquer outro responsável, retorna array vazio (pois ainda não tem cobranças)
+      return NextResponse.json({
+        payments: [],
+        source: 'supabase_empty',
+        count: 0,
+      });
+    }
+
+    // Chamada administrativa sem filtro e sem dados no Supabase ainda:
     return NextResponse.json({
-      payments: mergedPayments,
-      source: 'asaas_live',
-      asaasCount: asaasPayments.length,
-      matchedCount: matchedAsaasIds.size,
+      payments: allPayments,
+      source: 'mock_fallback',
+      count: allPayments.length,
     });
   } catch (error: any) {
-    console.error('[API Payments List] Erro:', error);
-    return NextResponse.json({ payments: mockPayments, source: 'mock_error' });
+    console.error('[API Payments List Error]:', error);
+    return NextResponse.json({
+      payments: mockPayments,
+      source: 'error_fallback',
+      error: error.message,
+    }, { status: 500 });
   }
 }

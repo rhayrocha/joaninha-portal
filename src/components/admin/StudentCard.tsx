@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { Child } from '@/types';
-import { User, Phone } from 'lucide-react';
+import { User, Phone, Edit2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StudentCardProps {
@@ -10,16 +10,30 @@ interface StudentCardProps {
   parentName: string;
   parentPhone: string;
   parentAvatarUrl?: string;
+  onEdit?: (student: Child) => void;
 }
 
-export default function StudentCard({ student, parentName, parentPhone, parentAvatarUrl }: StudentCardProps) {
-  // Format age correctly (assuming we calculate it or just display a string if it's not a Date)
-  // Since mock data might just have birthDate, we might need a helper, but let's assume we show a formatted string for now
-  
+export default function StudentCard({ 
+  student, 
+  parentName, 
+  parentPhone, 
+  parentAvatarUrl,
+  onEdit,
+}: StudentCardProps) {
   const getInitials = (name: string) => name.charAt(0).toUpperCase();
 
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative">
+      {onEdit && (
+        <button
+          type="button"
+          onClick={() => onEdit(student)}
+          className="absolute top-3 right-3 p-1.5 text-gray-400 hover:text-joaninha-bordeaux rounded-lg hover:bg-joaninha-cream/50 transition-colors z-10"
+          title="Editar dados e matrícula"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+      )}
       <div className="flex flex-col items-center text-center">
         {/* Child Avatar */}
         <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border-2 border-white shadow-sm bg-joaninha-lavender/30 flex items-center justify-center text-joaninha-bordeaux font-display text-xl font-bold group-hover:scale-105 transition-transform">

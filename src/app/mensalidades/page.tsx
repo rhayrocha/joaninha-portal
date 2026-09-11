@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import PaymentCard from '@/components/payments/PaymentCard';
 import AnnualPaymentCard from '@/components/payments/AnnualPaymentCard';
-import { mockPayments } from '@/data/mockPayments';
 import { formatCurrency, cn } from '@/lib/utils';
-import { FileText, Clock, CheckCircle, RefreshCw, Zap } from 'lucide-react';
+import { FileText, Clock, CheckCircle, RefreshCw, Zap, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Payment } from '@/types';
 
 type FilterType = 'all' | 'pending' | 'paid' | 'overdue' | 'asaas';
 
 export default function MensalidadesPage() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState<FilterType>('all');
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isGeneratingAsaas, setIsGeneratingAsaas] = useState(false);
   const [isAsaasLive, setIsAsaasLive] = useState(false);
@@ -22,12 +23,13 @@ export default function MensalidadesPage() {
   const fetchPayments = async () => {
     setIsSyncing(true);
     try {
-      const res = await fetch('/api/payments/list', { cache: 'no-store' });
+      const url = user?.id ? `/api/payments/list?parentId=${user.id}` : '/api/payments/list';
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.payments && Array.isArray(data.payments)) {
           setPayments(data.payments);
-          if (data.source === 'asaas_live') {
+          if (data.source === 'supabase_live' || data.source === 'asaas_live') {
             setIsAsaasLive(true);
           }
         }
@@ -43,7 +45,11 @@ export default function MensalidadesPage() {
     setIsGeneratingAsaas(true);
     setSyncMessage(null);
     try {
-      const res = await fetch('/api/payments/sync-asaas', { method: 'POST' });
+      const res = await fetch('/api/payments/sync-asaas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parentId: user?.id }),
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         setSyncMessage(data.message);
@@ -60,7 +66,7 @@ export default function MensalidadesPage() {
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [user?.id]);
 
   const paidPayments = payments.filter(p => p.status === 'paid');
   const pendingPayments = payments.filter(p => p.status === 'pending');
@@ -189,8 +195,29 @@ export default function MensalidadesPage() {
               <PaymentCard key={payment.id} payment={payment} />
             ))
           ) : (
-            <div className="col-span-full py-12 text-center text-joaninha-gray-500 bg-white rounded-2xl border border-dashed border-joaninha-gray-300">
-              Nenhuma mensalidade encontrada para este filtro.
+            <div className="col-span-full py-12 px-4 text-center bg-white rounded-3xl border border-dashed border-stone-300 flex flex-col items-center">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h4 className="text-base font-bold text-joaninha-black mb-1">
+                Nenhuma mensalidade encontrada
+              </h4>
+              <p className="text-xs text-stone-500 max-w-sm mb-4">
+                {payments.length === 0 
+                  ? "Este responsável ainda não possui faturas cadastradas no banco de dados. Você pode gerar cobranças de teste no Asaas Sandbox abaixo:" 
+                  : "Nenhuma fatura corresponde ao filtro selecionado."}
+              </p>
+              {payments.length === 0 && (
+                <button
+                  type="button"
+                  onClick={handleGenerateAsaas}
+                  disabled={isGeneratingAsaas}
+                  className="btn-primary py-2.5 px-5 text-xs font-semibold rounded-xl flex items-center gap-2"
+                >
+                  <Zap className={cn("w-4 h-4", isGeneratingAsaas && "animate-spin")} />
+                  <span>{isGeneratingAsaas ? "Gerando Faturas no Sandbox..." : "Gerar Mensalidades de Teste no Asaas"}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
