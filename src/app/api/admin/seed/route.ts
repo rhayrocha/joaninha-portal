@@ -153,19 +153,47 @@ export async function POST() {
       });
 
       // 3. Salva Aluno
-      const { data: studentData } = await supabase.from('students').upsert({
-        parent_id: userId,
-        full_name: fam.student.name,
-        birth_date: fam.student.birthDate,
-        class_name: fam.student.className,
-        shift: fam.student.shift,
-        allergies: fam.student.allergies,
-        avatar_url: fam.student.avatarUrl,
-        active: true,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'parent_id, full_name' as any }).select().single();
+      let { data: existingStudent } = await supabase
+        .from('students')
+        .select('id')
+        .eq('parent_id', userId)
+        .eq('full_name', fam.student.name)
+        .single();
 
-      const studentId = studentData?.id;
+      let studentId = existingStudent?.id;
+      if (existingStudent) {
+        await supabase
+          .from('students')
+          .update({
+            class_name: fam.student.className,
+            shift: fam.student.shift,
+            birth_date: fam.student.birthDate,
+            allergies: fam.student.allergies,
+            active: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', studentId);
+      } else {
+        const { data: newStudent, error: insertStudentErr } = await supabase
+          .from('students')
+          .insert({
+            parent_id: userId,
+            full_name: fam.student.name,
+            birth_date: fam.student.birthDate,
+            class_name: fam.student.className,
+            shift: fam.student.shift,
+            allergies: fam.student.allergies,
+            active: true,
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (insertStudentErr) {
+          console.warn('[Seed Student Insert Warning]:', insertStudentErr.message);
+        }
+        studentId = newStudent?.id;
+      }
 
       // 4. Salva Cobranças
       for (const p of fam.payments) {
