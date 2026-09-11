@@ -31,7 +31,11 @@ export async function POST(req: Request) {
         .limit(1)
         .single();
       
-      parentId = firstParent?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+      parentId = firstParent?.id || null;
+    }
+
+    if (!parentId) {
+      return NextResponse.json({ error: 'Nenhum responsável encontrado para sincronizar cobrança' }, { status: 404 });
     }
 
     // 1. Busca os dados do responsável e do(s) aluno(s) no Supabase
@@ -52,9 +56,9 @@ export async function POST(req: Request) {
     // 2. Garante o cliente no Asaas
     const customer = await asaas.getOrCreateCustomer({
       name: `${parentProfile.full_name} (Resp. ${student.full_name})`,
-      cpfCnpj: parentProfile.cpf || '456.789.123-00',
+      cpfCnpj: parentProfile.cpf || '',
       email: parentProfile.email,
-      mobilePhone: parentProfile.phone || '11987654321',
+      mobilePhone: parentProfile.phone || '',
       externalReference: parentProfile.id,
     });
 

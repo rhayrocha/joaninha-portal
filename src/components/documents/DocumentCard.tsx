@@ -20,8 +20,8 @@ export default function DocumentCard({
 }: DocumentCardProps) {
   const isParent = document.category === "parent";
   
-  const defaultName = isParent ? "Maria Clara Santos" : "Pedro Henrique Santos";
-  const defaultSubtitle = isParent ? "Responsável Legal" : "Aluno(a) • Maternal I";
+  const defaultName = isParent ? "Responsável Legal" : "Aluno(a)";
+  const defaultSubtitle = isParent ? "Responsável Financeiro" : "Aluno(a) Matriculado(a)";
   const defaultAvatar = isParent 
     ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face"
     : "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?w=150&h=150&fit=crop&crop=face";

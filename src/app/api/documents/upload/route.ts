@@ -11,18 +11,23 @@ export async function POST(req: Request) {
     const type = (formData.get('type') as string) || 'documento';
     const label = (formData.get('label') as string) || 'Documento';
     const category = (formData.get('category') as string) || 'parent';
-    const studentId = (formData.get('studentId') as string) || 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22';
-    const parentId = (formData.get('parentId') as string) || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const studentId = (formData.get('studentId') as string) || null;
+    const parentId = (formData.get('parentId') as string) || null;
 
     if (!file) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
+    }
+
+    if (!parentId) {
+      return NextResponse.json({ error: 'ID do responsável é obrigatório para anexar documento' }, { status: 400 });
     }
 
     const supabase = getAdminClient();
 
     // 1. Sanitiza o nome do arquivo e monta o caminho no Storage
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `matriculas/${studentId}/${Date.now()}_${cleanFileName}`;
+    const folderId = studentId || parentId;
+    const storagePath = `matriculas/${folderId}/${Date.now()}_${cleanFileName}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 

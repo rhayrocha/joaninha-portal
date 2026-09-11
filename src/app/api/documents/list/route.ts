@@ -7,7 +7,15 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const parentId = searchParams.get('parentId') || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const parentId = searchParams.get('parentId');
+
+    if (!parentId) {
+      return NextResponse.json({
+        documents: mockDocuments,
+        source: 'clean_template',
+        savedCount: 0,
+      });
+    }
 
     const supabase = getAdminClient();
 
@@ -18,8 +26,8 @@ export async function GET(req: Request) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('[API Documents List] Fallback para mock:', error.message);
-      return NextResponse.json({ documents: mockDocuments, source: 'mock_fallback' });
+      console.warn('[API Documents List] Erro ao buscar:', error.message);
+      return NextResponse.json({ documents: mockDocuments, source: 'template_fallback' });
     }
 
     // Mescla os documentos salvos no Supabase com a lista padrão de requisitos

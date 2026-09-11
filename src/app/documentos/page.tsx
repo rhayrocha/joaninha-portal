@@ -63,8 +63,8 @@ export default function DocumentosPage() {
       formData.append('type', doc.type);
       formData.append('label', doc.label);
       formData.append('category', doc.category);
-      formData.append('studentId', mainChild?.id || 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22');
-      formData.append('parentId', user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
+      if (mainChild?.id) formData.append('studentId', mainChild.id);
+      if (user?.id) formData.append('parentId', user.id);
 
       const res = await fetch('/api/documents/upload', {
         method: 'POST',
@@ -96,8 +96,8 @@ export default function DocumentosPage() {
           <div key={doc.id} className="space-y-3">
             <DocumentCard 
               document={doc}
-              personName={doc.category === 'parent' ? (user?.name || "Maria Clara Santos") : (mainChild?.name || "Pedro Henrique Santos")}
-              personSubtitle={doc.category === 'parent' ? "Responsável Legal" : `Aluno(a) • ${mainChild?.className || "Maternal I"}`}
+              personName={doc.category === 'parent' ? (user?.name || "Responsável Legal") : (mainChild?.name || "Aluno(a)")}
+              personSubtitle={doc.category === 'parent' ? "Responsável Legal" : `Aluno(a) • ${mainChild?.className || "Turma da Criança"}`}
               avatarUrl={doc.category === 'parent' ? user?.avatarUrl : mainChild?.photoUrl}
               onUploadClick={() => {
                 if (doc.status === 'pending' || doc.status === 'rejected') {

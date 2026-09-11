@@ -1,110 +1,51 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import StatsCard from '@/components/admin/StatsCard';
 import RevenueChart from '@/components/admin/RevenueChart';
 import { DollarSign, Clock, AlertTriangle, Users, ArrowRight } from 'lucide-react';
-import { allPayments } from '@/data/mockPayments';
-import { allStudents } from '@/data/mockStudents';
-import { allDocuments } from '@/data/mockAllDocuments';
-import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function AdminDashboardPage() {
-  const currentMonth = 8; // September is 8
-  const currentYear = 2026;
-
-  const [liveStats, setLiveStats] = useState<{
+  const [stats, setStats] = useState<{
     totalStudents: number;
     receivedThisMonth: number;
     pendingThisMonth: number;
     overdueTotal: number;
     pendingDocsCount: number;
+    pendingDocsList: any[];
     chartData: { month: string; received: number; pending: number }[];
     lastPaidPayments: any[];
-  } | null>(null);
+  }>({
+    totalStudents: 0,
+    receivedThisMonth: 0,
+    pendingThisMonth: 0,
+    overdueTotal: 0,
+    pendingDocsCount: 0,
+    pendingDocsList: [],
+    chartData: [
+      { month: 'Abr', received: 0, pending: 0 },
+      { month: 'Mai', received: 0, pending: 0 },
+      { month: 'Jun', received: 0, pending: 0 },
+      { month: 'Jul', received: 0, pending: 0 },
+      { month: 'Ago', received: 0, pending: 0 },
+      { month: 'Set', received: 0, pending: 0 },
+    ],
+    lastPaidPayments: [],
+  });
 
   useEffect(() => {
     fetch('/api/admin/dashboard/stats', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.stats) {
-          setLiveStats(data.stats);
+          setStats(data.stats);
         }
       })
       .catch(err => console.warn('[Admin Dashboard] Erro ao carregar métricas:', err));
   }, []);
-
-  const fallbackData = useMemo(() => {
-    let received = 0;
-    let pending = 0;
-    let overdue = 0;
-
-    allPayments.forEach(payment => {
-      const date = new Date(payment.dueDate);
-      const isSept2026 = date.getFullYear() === currentYear && date.getMonth() === currentMonth;
-
-      if (payment.status === 'paid' && isSept2026) {
-        received += payment.amount;
-      }
-      if (payment.status === 'pending' && isSept2026) {
-        pending += payment.amount;
-      }
-      if (payment.status === 'overdue') {
-        overdue += payment.amount;
-      }
-    });
-
-    const months = ['Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set'];
-    const chart = months.map((m, index) => ({
-      month: m,
-      received: 0,
-      pending: 0,
-      monthIndex: index + 3
-    }));
-
-    allPayments.forEach(payment => {
-      const date = new Date(payment.dueDate);
-      if (date.getFullYear() === currentYear) {
-        const monthIndex = date.getMonth();
-        const dataPoint = chart.find(d => d.monthIndex === monthIndex);
-        if (dataPoint) {
-          if (payment.status === 'paid') {
-            dataPoint.received += payment.amount;
-          } else {
-            dataPoint.pending += payment.amount;
-          }
-        }
-      }
-    });
-
-    const lastPaid = allPayments
-      .filter(p => p.status === 'paid')
-      .sort((a, b) => new Date(b.paidAt || b.dueDate).getTime() - new Date(a.paidAt || a.dueDate).getTime())
-      .slice(0, 5)
-      .map(p => ({
-        id: p.id,
-        childName: p.childName,
-        parentName: p.parentName || 'Responsável',
-        amount: p.totalAmount,
-        paidAt: p.paidAt || p.dueDate,
-        reference: p.reference,
-      }));
-
-    return {
-      receivedThisMonth: received,
-      pendingThisMonth: pending,
-      overdueTotal: overdue,
-      totalStudents: allStudents.length,
-      chartData: chart,
-      lastPaidPayments: lastPaid,
-      pendingDocsCount: allDocuments.filter(d => d.status === 'under_review').length,
-    };
-  }, []);
-
-  const stats = liveStats || fallbackData;
-  const pendingDocs = allDocuments.filter(d => d.status === 'under_review');
 
   return (
     <AdminShell title="Dashboard" subtitle="Visão geral financeira">
@@ -146,21 +87,25 @@ export default function AdminDashboardPage() {
         <div className="rounded-2xl bg-white p-6 shadow-card">
           <h3 className="mb-6 font-display text-lg font-bold text-joaninha-black">Últimos Pagamentos</h3>
           <div className="space-y-4">
-            {stats.lastPaidPayments.map((payment: any) => (
-              <div key={payment.id} className="flex items-center justify-between rounded-xl border border-joaninha-gray-100 p-4">
-                <div>
-                  <p className="font-semibold text-joaninha-black">{payment.parentName || 'Responsável'}</p>
-                  <p className="text-xs text-joaninha-gray-400">{payment.childName}</p>
-                  <p className="text-sm text-joaninha-gray-500">{formatDate(payment.paidAt)}</p>
+            {stats.lastPaidPayments && stats.lastPaidPayments.length > 0 ? (
+              stats.lastPaidPayments.map((payment: any) => (
+                <div key={payment.id} className="flex items-center justify-between rounded-xl border border-joaninha-gray-100 p-4">
+                  <div>
+                    <p className="font-semibold text-joaninha-black">{payment.parentName || 'Responsável'}</p>
+                    <p className="text-xs text-joaninha-gray-400">{payment.childName}</p>
+                    <p className="text-sm text-joaninha-gray-500">{formatDate(payment.paidAt)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-joaninha-green">{formatCurrency(payment.amount)}</p>
+                    <span className="inline-flex rounded-full bg-joaninha-green-light px-2 py-1 text-xs font-semibold text-joaninha-green">
+                      Pago
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-joaninha-green">{formatCurrency(payment.amount)}</p>
-                  <span className="inline-flex rounded-full bg-joaninha-green-light px-2 py-1 text-xs font-semibold text-joaninha-green">
-                    Pago
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-joaninha-gray-400 py-6 text-center">Nenhum pagamento liquidado registrado ainda.</p>
+            )}
           </div>
         </div>
 
@@ -173,19 +118,24 @@ export default function AdminDashboardPage() {
           </div>
           
           <div className="space-y-4">
-            {pendingDocs.slice(0, 3).map(doc => (
-              <div key={doc.id} className="flex items-center justify-between rounded-xl border border-joaninha-gray-100 p-4">
-                <div>
-                  <p className="font-semibold text-joaninha-black">{doc.label}</p>
-                  <p className="text-sm text-joaninha-gray-500">Enviado em {doc.uploadedAt ? formatDate(doc.uploadedAt) : 'Data não informada'}</p>
+            {stats.pendingDocsList && stats.pendingDocsList.length > 0 ? (
+              stats.pendingDocsList.slice(0, 3).map((doc: any) => (
+                <div key={doc.id} className="flex items-center justify-between rounded-xl border border-joaninha-gray-100 p-4">
+                  <div>
+                    <p className="font-semibold text-joaninha-black">{doc.label}</p>
+                    <p className="text-xs text-joaninha-gray-400">{doc.childName} • {doc.parentName}</p>
+                    <p className="text-sm text-joaninha-gray-500">Enviado em {doc.uploadedAt ? formatDate(doc.uploadedAt) : 'Data não informada'}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                      Em Análise
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-                    Em Análise
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-joaninha-gray-400 py-6 text-center">Nenhum documento pendente de análise.</p>
+            )}
           </div>
 
           <Link href="/admin/documentos" className="mt-6 flex items-center justify-center text-sm font-medium text-joaninha-bordeaux hover:underline">

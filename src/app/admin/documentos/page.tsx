@@ -3,8 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import DocumentReviewCard from '@/components/admin/DocumentReviewCard';
-import { allDocuments } from '@/data/mockAllDocuments';
-import { allStudents, parentInfo } from '@/data/mockStudents';
 import type { Document as DocType } from '@/types';
 import { cn } from '@/lib/utils';
 import { FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
@@ -12,7 +10,7 @@ import { FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
 type Tab = 'Em Análise' | 'Aprovados' | 'Rejeitados' | 'Todos';
 
 export default function AdminDocumentosPage() {
-  const [documents, setDocuments] = useState<DocType[]>(allDocuments);
+  const [documents, setDocuments] = useState<DocType[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('Em Análise');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +21,7 @@ export default function AdminDocumentosPage() {
       const res = await fetch('/api/admin/documents/list', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        if (data.documents && data.documents.length > 0) {
+        if (data.documents && Array.isArray(data.documents)) {
           setDocuments(data.documents);
         }
       }
@@ -104,43 +102,16 @@ export default function AdminDocumentosPage() {
     }
   };
 
-  const getParentName = (doc: DocType) => {
-    if (doc.childId) {
-      const student = allStudents.find(s => s.id === doc.childId);
-      if (student && student.parentId) {
-        return parentInfo[student.parentId]?.name || 'Maria Clara Santos';
-      }
-    }
-    if (doc.label.includes('Maria Clara')) return 'Maria Clara Santos';
-    if (doc.label.includes('Ana Paula')) return 'Ana Paula Oliveira';
-    if (doc.label.includes('Fernanda')) return 'Fernanda Costa';
-    if (doc.label.includes('Roberto')) return 'Roberto Pereira';
-    return 'Maria Clara Santos';
+  const getParentName = (doc: any) => {
+    return doc.parentName || 'Responsável';
   };
 
-  const getStudentName = (doc: DocType) => {
-    if (doc.childId) {
-      const student = allStudents.find(s => s.id === doc.childId);
-      return student ? student.name : undefined;
-    }
-    if (doc.label.includes('Maria Clara')) return 'Pedro Henrique Santos';
-    if (doc.label.includes('Ana Paula')) return 'Sofia Oliveira';
-    if (doc.label.includes('Fernanda')) return 'Miguel Costa';
-    if (doc.label.includes('Roberto')) return 'Laura Pereira';
-    return undefined;
+  const getStudentName = (doc: any) => {
+    return doc.childName || 'Aluno(a)';
   };
 
-  const getParentAvatar = (doc: DocType) => {
-    if (doc.childId) {
-      const student = allStudents.find(s => s.id === doc.childId);
-      if (student && student.parentId && parentInfo[student.parentId]?.avatarUrl) {
-        return parentInfo[student.parentId].avatarUrl;
-      }
-    }
-    if (doc.label.includes('Ana Paula')) return parentInfo.usr_002?.avatarUrl;
-    if (doc.label.includes('Fernanda')) return parentInfo.usr_003?.avatarUrl;
-    if (doc.label.includes('Roberto')) return parentInfo.usr_004?.avatarUrl;
-    return parentInfo.usr_001?.avatarUrl;
+  const getParentAvatar = (doc: any) => {
+    return doc.avatarUrl;
   };
 
   return (

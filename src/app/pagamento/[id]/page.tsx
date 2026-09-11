@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import AppShell from '@/components/layout/AppShell';
 import BoletoView from '@/components/payments/BoletoView';
 import PixView from '@/components/payments/PixView';
-import { mockPayments } from '@/data/mockPayments';
 import { formatCurrency, formatDateLong, cn } from '@/lib/utils';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';

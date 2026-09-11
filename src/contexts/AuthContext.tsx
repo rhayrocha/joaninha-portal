@@ -37,20 +37,27 @@ export function AuthProvider({ children: childrenProp }: { children: ReactNode }
         .select('*')
         .eq('parent_id', userId);
 
+      const calculateAge = (birthDateStr?: string) => {
+        if (!birthDateStr) return 3;
+        const b = new Date(birthDateStr);
+        const diff = Date.now() - b.getTime();
+        return Math.max(1, Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25)));
+      };
+
       const mappedUser: User = {
         id: userId,
-        name: profile?.full_name || 'Maria Clara Santos',
+        name: profile?.full_name || email.split('@')[0] || 'Responsável',
         email: profile?.email || email,
-        phone: profile?.phone || '(11) 98765-4321',
-        cpf: profile?.cpf || '456.789.123-00',
-        rg: '12.345.678-9',
+        phone: profile?.phone || '',
+        cpf: profile?.cpf || '',
+        rg: (profile as any)?.rg || '',
         address: {
-          street: 'Alameda dos Ipês',
-          number: '120',
-          neighborhood: 'Jardins',
-          city: 'São Paulo',
-          state: 'SP',
-          zipCode: '01400-000',
+          street: (profile as any)?.address_street || '',
+          number: (profile as any)?.address_number || '',
+          neighborhood: (profile as any)?.address_neighborhood || '',
+          city: (profile as any)?.address_city || 'São Paulo',
+          state: (profile as any)?.address_state || 'SP',
+          zipCode: (profile as any)?.address_zip || '',
         },
         avatarUrl: profile?.avatar_url,
       };
@@ -60,11 +67,11 @@ export function AuthProvider({ children: childrenProp }: { children: ReactNode }
             id: s.id,
             name: s.full_name,
             birthDate: s.birth_date,
-            age: 3,
+            age: calculateAge(s.birth_date),
             className: s.class_name || 'Maternal I',
             shift: s.shift === 'integral' ? 'Integral' : s.shift === 'matutino' ? 'Manhã' : 'Tarde',
             parentId: s.parent_id,
-            enrollmentDate: s.created_at || '2026-02-01',
+            enrollmentDate: s.created_at || new Date().toISOString(),
             photoUrl: s.avatar_url,
           }))
         : [];

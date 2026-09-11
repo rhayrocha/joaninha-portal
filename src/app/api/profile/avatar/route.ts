@@ -6,8 +6,12 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
+    const userId = formData.get('userId') as string | null;
     const file = formData.get('file') as File | null;
-    const userId = (formData.get('userId') as string) || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    if (!userId) {
+      return NextResponse.json({ error: 'ID do usuário é obrigatório' }, { status: 400 });
+    }
 
     if (!file) {
       return NextResponse.json({ error: 'Nenhum arquivo de imagem enviado' }, { status: 400 });

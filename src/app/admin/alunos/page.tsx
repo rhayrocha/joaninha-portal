@@ -5,18 +5,18 @@ import AdminShell from '@/components/admin/AdminShell';
 import ClassSection from '@/components/admin/ClassSection';
 import NewParentModal from '@/components/admin/NewParentModal';
 import EditStudentModal from '@/components/admin/EditStudentModal';
-import { allStudents as initialStudents, parentInfo as initialParentInfo, CLASS_NAMES } from '@/data/mockStudents';
+import { CLASS_NAMES } from '@/data/mockStudents';
 import { Search, UserPlus, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
 import type { Child } from '@/types';
 
 export default function AdminAlunosPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [students, setStudents] = useState(initialStudents);
-  const [parentMap, setParentMap] = useState(initialParentInfo);
+  const [students, setStudents] = useState<Child[]>([]);
+  const [parentMap, setParentMap] = useState<Record<string, any>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Child | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedNotice, setSeedNotice] = useState<string | null>(null);
 
@@ -145,10 +145,17 @@ export default function AdminAlunosPage() {
           );
         })}
 
-        {filteredStudents.length === 0 && (
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-card border border-joaninha-gray-100">
+            <Loader2 className="w-8 h-8 animate-spin text-joaninha-bordeaux mb-3" />
+            <p className="text-sm font-medium text-stone-600">Carregando turmas e alunos do Supabase...</p>
+          </div>
+        )}
+
+        {!isLoading && filteredStudents.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-card border border-joaninha-gray-100">
             <h3 className="text-lg font-medium text-joaninha-black">Nenhum aluno encontrado</h3>
-            <p className="mt-1 text-joaninha-gray-500">Tente buscar por outro nome.</p>
+            <p className="mt-1 text-joaninha-gray-500">Tente buscar por outro nome ou cadastre uma nova família no botão acima.</p>
           </div>
         )}
       </div>

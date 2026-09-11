@@ -32,8 +32,8 @@ export async function GET() {
       reviewedAt: doc.reviewed_at,
       rejectionReason: doc.rejection_reason,
       required: doc.required ?? true,
-      parentName: doc.profiles?.full_name || 'Maria Clara Santos',
-      childName: doc.students?.full_name || 'Pedro Henrique Santos',
+      parentName: doc.profiles?.full_name || 'Responsável',
+      childName: doc.students?.full_name || 'Aluno(a)',
       avatarUrl: doc.profiles?.avatar_url,
     }));
 

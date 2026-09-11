@@ -19,10 +19,12 @@ export async function GET() {
       .order('due_date', { ascending: false });
 
     // 3. Documentos em Análise
-    const { count: pendingDocsCount } = await supabase
+    const { data: dbPendingDocs, count: pendingDocsCount } = await supabase
       .from('documents')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'under_review');
+      .select('id, title, file_url, created_at, status, profiles:parent_id(full_name), students:student_id(full_name)', { count: 'exact' })
+      .eq('status', 'under_review')
+      .order('created_at', { ascending: false })
+      .limit(5);
 
     const now = new Date();
     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -87,6 +89,16 @@ export async function GET() {
         reference: p.title,
       }));
 
+    // Documentos recentes em análise
+    const pendingDocsList = (dbPendingDocs || []).map((d: any) => ({
+      id: d.id,
+      label: d.title || 'Documento',
+      parentName: d.profiles?.full_name || 'Responsável',
+      childName: d.students?.full_name || 'Aluno(a)',
+      uploadedAt: d.created_at,
+      status: d.status,
+    }));
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -95,6 +107,7 @@ export async function GET() {
         pendingThisMonth,
         overdueTotal,
         pendingDocsCount: pendingDocsCount || 0,
+        pendingDocsList,
         chartData,
         lastPaidPayments: lastPaid,
       }

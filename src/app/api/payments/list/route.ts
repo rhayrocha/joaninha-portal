@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '@/lib/supabase/admin';
-import { mockPayments, allPayments } from '@/data/mockPayments';
 import type { Payment } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -59,36 +58,17 @@ export async function GET(req: Request) {
       });
     }
 
-    // Se informou parentId e não tem pagamentos no banco:
-    if (parentId) {
-      // Se for a conta demonstrativa inicial da Maria Santos e ainda não semeada no banco
-      if (parentId === 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11') {
-        return NextResponse.json({
-          payments: mockPayments,
-          source: 'mock_demo',
-          count: mockPayments.length,
-        });
-      }
-
-      // Para qualquer outro responsável, retorna array vazio (pois ainda não tem cobranças)
-      return NextResponse.json({
-        payments: [],
-        source: 'supabase_empty',
-        count: 0,
-      });
-    }
-
-    // Chamada administrativa sem filtro e sem dados no Supabase ainda:
+    // Se não houver pagamentos cadastrados no Supabase para este filtro:
     return NextResponse.json({
-      payments: allPayments,
-      source: 'mock_fallback',
-      count: allPayments.length,
+      payments: [],
+      source: 'supabase_empty',
+      count: 0,
     });
   } catch (error: any) {
     console.error('[API Payments List Error]:', error);
     return NextResponse.json({
-      payments: mockPayments,
-      source: 'error_fallback',
+      payments: [],
+      source: 'error',
       error: error.message,
     }, { status: 500 });
   }

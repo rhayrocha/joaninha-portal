@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '@/lib/supabase/admin';
-import { allStudents, parentInfo } from '@/data/mockStudents';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +14,9 @@ export async function GET() {
 
     if (error || !dbStudents) {
       return NextResponse.json({
-        students: allStudents,
-        parentInfo,
-        source: 'mock_fallback',
+        students: [],
+        parentInfo: {},
+        source: 'supabase_empty',
       });
     }
 
@@ -26,30 +25,27 @@ export async function GET() {
       name: s.full_name,
       className: s.class_name || 'Maternal I',
       shift: s.shift === 'integral' ? 'Integral' : s.shift === 'matutino' ? 'Manhã' : 'Tarde',
-      photoUrl: s.avatar_url || 'https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?w=150&h=150&fit=crop&crop=face',
+      photoUrl: s.avatar_url || '',
       parentId: s.parent_id,
       birthDate: s.birth_date,
       allergies: s.allergies,
     }));
 
-    const mappedParentInfo: Record<string, any> = { ...parentInfo };
+    const mappedParentInfo: Record<string, any> = {};
     dbStudents.forEach((s: any) => {
       if (s.profiles && s.parent_id) {
         mappedParentInfo[s.parent_id] = {
-          name: s.profiles.full_name,
-          email: s.profiles.email,
-          phone: s.profiles.phone || '(11) 98765-4321',
-          cpf: s.profiles.cpf || '456.789.123-00',
-          avatarUrl: s.profiles.avatar_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+          name: s.profiles.full_name || 'Responsável',
+          email: s.profiles.email || '',
+          phone: s.profiles.phone || '',
+          cpf: s.profiles.cpf || '',
+          avatarUrl: s.profiles.avatar_url || '',
         };
       }
     });
 
-    // Se houver alunos no Supabase, usa estritamente os alunos reais do banco
-    const finalStudents = mappedStudents.length > 0 ? mappedStudents : allStudents;
-
     return NextResponse.json({
-      students: finalStudents,
+      students: mappedStudents,
       parentInfo: mappedParentInfo,
       source: 'supabase_live',
       supabaseCount: mappedStudents.length,
@@ -57,9 +53,10 @@ export async function GET() {
   } catch (error: any) {
     console.error('[API Admin Students List Error]:', error);
     return NextResponse.json({
-      students: allStudents,
-      parentInfo,
-      source: 'mock_error',
-    });
+      students: [],
+      parentInfo: {},
+      source: 'error',
+      error: error.message,
+    }, { status: 500 });
   }
 }

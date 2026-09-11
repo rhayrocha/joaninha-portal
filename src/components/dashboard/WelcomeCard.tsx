@@ -108,7 +108,7 @@ export default function WelcomeCard() {
               </p>
 
               <a
-                href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20gostaria%20de%20um%20recado%20sobre%20o%20Pedro"
+                href={`https://wa.me/5511999999999?text=${encodeURIComponent(`Olá, gostaria de um recado sobre ${mainChild.name}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 px-3 rounded-lg text-xs font-semibold bg-white hover:bg-stone-50 text-joaninha-bordeaux border border-stone-200 shadow-2xs transition-colors"
