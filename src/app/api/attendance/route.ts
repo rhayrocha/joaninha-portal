@@ -116,6 +116,11 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('[API Attendance POST Error]:', error.message);
+      if (error.message.includes("Could not find the table 'public.attendance'")) {
+        return NextResponse.json({
+          error: "A tabela 'attendance' precisa ser criada no Supabase. Acesse o SQL Editor no Supabase e execute o script 'setup_teachers_attendance.sql'.",
+        }, { status: 400 });
+      }
       return NextResponse.json({ error: 'Erro ao salvar chamada no banco: ' + error.message }, { status: 500 });
     }
 

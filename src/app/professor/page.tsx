@@ -44,7 +44,7 @@ function TeacherChamadaContent() {
   const { teacher, isAuthenticated, isLoading: isAuthLoading } = useTeacherAuth();
   const router = useRouter();
 
-  const [selectedClass, setSelectedClass] = useState<string>("Maternal I");
+  const [selectedClass, setSelectedClass] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -61,41 +61,48 @@ function TeacherChamadaContent() {
     }
   }, [isAuthLoading, isAuthenticated, router]);
 
-  // Define a primeira turma do professor
+  // Define a turma inicial do professor assim que o perfil carrega
   useEffect(() => {
-    if (teacher && teacher.classes.length > 0 && !teacher.classes.includes(selectedClass)) {
-      setSelectedClass(teacher.classes[0]);
+    if (teacher?.classes && teacher.classes.length > 0) {
+      if (!selectedClass || !teacher.classes.includes(selectedClass)) {
+        setSelectedClass(teacher.classes[0]);
+      }
     }
   }, [teacher, selectedClass]);
 
-  // Carrega alunos e chamada da data e turma
-  const loadAttendance = useCallback(async () => {
-    if (!selectedClass) return;
+  // Carrega alunos e chamada da data e turma com cancelamento de requisição anterior
+  useEffect(() => {
+    let isCancelled = false;
+    if (!isAuthenticated || !selectedClass) return;
+
     setIsLoadingStudents(true);
     setSaveFeedback(null);
-    try {
-      const res = await fetch(
-        `/api/attendance?className=${encodeURIComponent(selectedClass)}&date=${selectedDate}`,
-        { cache: "no-store" }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data.records && Array.isArray(data.records)) {
-          setStudents(data.records);
-        }
-      }
-    } catch (err) {
-      console.error("[Chamada] Erro ao carregar alunos:", err);
-    } finally {
-      setIsLoadingStudents(false);
-    }
-  }, [selectedClass, selectedDate]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadAttendance();
-    }
-  }, [isAuthenticated, loadAttendance]);
+    fetch(
+      `/api/attendance?className=${encodeURIComponent(selectedClass)}&date=${selectedDate}`,
+      { cache: "no-store" }
+    )
+      .then(res => res.json())
+      .then(data => {
+        if (!isCancelled) {
+          if (data.records && Array.isArray(data.records)) {
+            setStudents(data.records);
+          } else {
+            setStudents([]);
+          }
+        }
+      })
+      .catch(err => {
+        if (!isCancelled) console.error("[Chamada] Erro ao carregar alunos:", err);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsLoadingStudents(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isAuthenticated, selectedClass, selectedDate]);
 
   // Alterna status de presença
   const handleToggleStatus = (studentId: string, newStatus: "present" | "absent") => {
