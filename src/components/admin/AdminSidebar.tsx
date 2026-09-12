@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, FileCheck, Users, Receipt, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileCheck, Users, Receipt, LogOut, GraduationCap } from 'lucide-react';
 import Logo from '@/components/shared/Logo';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { cn } from '@/lib/utils';
@@ -52,6 +52,7 @@ export default function AdminSidebar({ className, onItemClick }: AdminSidebarPro
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/documentos', icon: FileCheck, label: 'Documentos' },
     { href: '/admin/alunos', icon: Users, label: 'Alunos' },
+    { href: '/admin/professores', icon: GraduationCap, label: 'Professores' },
     { href: '/admin/pagamentos', icon: Receipt, label: 'Pagamentos' },
   ];
 

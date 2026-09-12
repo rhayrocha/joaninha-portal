@@ -99,6 +99,41 @@ export interface AdminUser {
   avatarUrl?: string;
 }
 
+export type AttendanceStatus = "present" | "absent" | "justified";
+
+export interface TeacherUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: "teacher";
+  classes: string[];
+  avatarUrl?: string;
+  createdAt?: string;
+}
+
+export interface AttendanceRecord {
+  id?: string;
+  studentId: string;
+  studentName?: string;
+  className: string;
+  date: string;
+  status: AttendanceStatus;
+  notes?: string;
+  recordedBy?: string;
+  avatarUrl?: string;
+}
+
+export interface AttendanceSummary {
+  todayStatus: "present" | "absent" | "pending";
+  todayNotes?: string;
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  attendanceRate: number;
+  teacherName?: string;
+}
+
 // ===== Helper Types =====
 
 export interface DocumentTypeConfig {

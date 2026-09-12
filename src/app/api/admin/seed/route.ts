@@ -224,10 +224,66 @@ export async function POST() {
       });
     }
 
+    // 5. Cadastra Professoras de Demonstração
+    const teachers = [
+      {
+        name: 'Profª Camila Valente',
+        email: 'camila.valente@joaninhacreche.com.br',
+        password: 'senha123',
+        phone: '(11) 98888-7777',
+        classes: ['Maternal I', 'Maternal II'],
+        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face',
+      },
+      {
+        name: 'Profª Luciana Moraes',
+        email: 'luciana.moraes@joaninhacreche.com.br',
+        password: 'senha123',
+        phone: '(11) 97777-6666',
+        classes: ['Berçário'],
+        avatarUrl: 'https://images.unsplash.com/photo-1580894732470-349f4c39c878?w=150&h=150&fit=crop&crop=face',
+      }
+    ];
+
+    for (const t of teachers) {
+      let teacherId: string;
+      const { data: tAuth, error: tAuthErr } = await supabase.auth.admin.createUser({
+        email: t.email,
+        password: t.password,
+        email_confirm: true,
+        user_metadata: { full_name: t.name, role: 'teacher' },
+      });
+
+      if (tAuthErr) {
+        const { data: ex } = await supabase.from('profiles').select('id').eq('email', t.email).single();
+        teacherId = ex ? ex.id : '';
+      } else {
+        teacherId = tAuth.user.id;
+      }
+
+      if (teacherId) {
+        await supabase.from('profiles').upsert({
+          id: teacherId,
+          email: t.email,
+          full_name: t.name,
+          role: 'teacher',
+          phone: t.phone,
+          avatar_url: t.avatarUrl,
+          updated_at: new Date().toISOString(),
+        });
+
+        try {
+          await supabase.from('teacher_classes').delete().eq('teacher_id', teacherId);
+          const rows = t.classes.map(c => ({ teacher_id: teacherId, class_name: c }));
+          await supabase.from('teacher_classes').insert(rows);
+        } catch {}
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Base de dados de teste populada com 3 famílias reais no Supabase!',
+      message: 'Base de dados populada com 3 famílias e 2 professoras com turmas vinculadas!',
       families: results,
+      teachers: teachers.map(t => ({ name: t.name, email: t.email, classes: t.classes })),
     });
   } catch (error: any) {
     console.error('[Admin Seed Error]:', error);

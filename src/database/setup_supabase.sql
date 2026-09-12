@@ -100,6 +100,29 @@ CREATE TABLE IF NOT EXISTS daily_routines (
     UNIQUE(class_name, routine_date)
 );
 
+-- Tabela de Vinculação de Professores com Turmas
+CREATE TABLE IF NOT EXISTS teacher_classes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    class_name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(teacher_id, class_name)
+);
+
+-- Tabela de Chamada / Presença Diária
+CREATE TABLE IF NOT EXISTS attendance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    class_name VARCHAR(50) NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    status VARCHAR(20) NOT NULL DEFAULT 'present' CHECK (status IN ('present', 'absent', 'justified')),
+    notes TEXT,
+    recorded_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_id, date)
+);
+
 -- ------------------------------------------------------------------------------
 -- 3. ÍNDICES DE PERFORMANCE
 -- ------------------------------------------------------------------------------
@@ -110,6 +133,10 @@ CREATE INDEX IF NOT EXISTS idx_payments_parent_id ON payments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_payments_due_date ON payments(due_date);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
 CREATE INDEX IF NOT EXISTS idx_payments_asaas_id ON payments(asaas_payment_id);
+CREATE INDEX IF NOT EXISTS idx_teacher_classes_teacher ON teacher_classes(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_teacher_classes_class ON teacher_classes(class_name);
+CREATE INDEX IF NOT EXISTS idx_attendance_student_date ON attendance(student_id, date);
+CREATE INDEX IF NOT EXISTS idx_attendance_class_date ON attendance(class_name, date);
 
 -- ------------------------------------------------------------------------------
 -- 4. SEGURANÇA ROW LEVEL SECURITY (RLS)
@@ -119,6 +146,8 @@ ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_routines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teacher_classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de Acesso
 DROP POLICY IF EXISTS "Acesso completo para service role" ON profiles;
@@ -135,6 +164,12 @@ CREATE POLICY "Acesso completo para service role" ON payments FOR ALL USING (tru
 
 DROP POLICY IF EXISTS "Acesso completo para service role" ON daily_routines;
 CREATE POLICY "Acesso completo para service role" ON daily_routines FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Acesso completo para service role" ON teacher_classes;
+CREATE POLICY "Acesso completo para service role" ON teacher_classes FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Acesso completo para service role" ON attendance;
+CREATE POLICY "Acesso completo para service role" ON attendance FOR ALL USING (true);
 
 -- ------------------------------------------------------------------------------
 -- 5. DADOS INICIAIS (SEED) - FAMÍLIA DEMONSTRAÇÃO & ESCOLA

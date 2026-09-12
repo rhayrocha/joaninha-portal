@@ -26,7 +26,7 @@ export async function GET() {
     const supabase = getAdminClient();
 
     // Testa se as tabelas principais já foram criadas
-    const tables = ['profiles', 'students', 'documents', 'payments', 'daily_routines'];
+    const tables = ['profiles', 'students', 'documents', 'payments', 'daily_routines', 'teacher_classes', 'attendance'];
     const tableStatus: Record<string, { exists: boolean; count?: number; error?: string }> = {};
 
     for (const table of tables) {

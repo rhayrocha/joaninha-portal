@@ -143,7 +143,10 @@ export function AuthProvider({ children: childrenProp }: { children: ReactNode }
 
       if (profile && profile.role !== 'parent') {
         await supabase.auth.signOut();
-        throw new Error('Este login é restrito à equipe escolar. Acesse pelo Portal Administrativo (/admin).');
+        if (profile.role === 'teacher') {
+          throw new Error('Acesso de Professora detectado. Por favor, acesse pelo Portal do Professor (/professor/login).');
+        }
+        throw new Error('Este login é restrito aos responsáveis. Acesse pelo Portal Administrativo (/admin).');
       }
 
       await loadUserData(data.user.id, data.user.email || email);

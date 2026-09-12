@@ -1,14 +1,40 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { getGreeting } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, MessageCircle, MapPin, Clock, Award, ShieldCheck, Heart } from "lucide-react";
+import { Sparkles, MessageCircle, MapPin, Clock, Award, ShieldCheck, Heart, X, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function WelcomeCard() {
   const { user, children } = useAuth();
   const greeting = getGreeting();
   const mainChild = children && children.length > 0 ? children[0] : null;
+
+  const [attendanceSummary, setAttendanceSummary] = useState<{
+    todayStatus: 'present' | 'absent' | 'pending';
+    todayNotes?: string | null;
+    totalDays: number;
+    presentDays: number;
+    absentDays: number;
+    attendanceRate: number;
+    teacherName?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!mainChild?.id) return;
+    fetch(`/api/attendance/summary?studentId=${mainChild.id}`, { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAttendanceSummary(data);
+        }
+      })
+      .catch(err => console.warn('[WelcomeCard] Erro ao carregar presença:', err));
+  }, [mainChild?.id]);
+
+  const isAbsentToday = attendanceSummary?.todayStatus === 'absent';
+  const isPresentToday = attendanceSummary?.todayStatus === 'present';
 
   return (
     <div className="bg-white rounded-3xl border border-stone-200/80 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.05)] p-6 sm:p-8 relative overflow-hidden">
@@ -42,9 +68,11 @@ export default function WelcomeCard() {
               <h1 className="text-2xl sm:text-3xl font-display font-bold text-joaninha-black tracking-tight">
                 {greeting}, {user?.name ? user.name.split(' ')[0] : "Responsável"}!
               </h1>
-              <p className="text-xs sm:text-sm text-stone-600">
-                Responsável Financeiro & Pedagógico de <strong className="text-joaninha-bordeaux font-semibold">{mainChild?.name}</strong>
-              </p>
+              {mainChild?.name ? (
+                <p className="text-xs sm:text-sm text-stone-600">
+                  Responsável Financeiro & Pedagógico de <strong className="text-joaninha-bordeaux font-semibold">{mainChild.name}</strong>
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -64,7 +92,7 @@ export default function WelcomeCard() {
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-50 border border-stone-200/70 text-xs font-medium text-stone-700">
                 <Award className="w-3.5 h-3.5 text-joaninha-bordeaux" />
-                Profª Camila Valente
+                {attendanceSummary?.teacherName || 'Profª Camila Valente'}
               </span>
             </div>
           )}
@@ -83,8 +111,14 @@ export default function WelcomeCard() {
                   </div>
                 )}
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center text-white text-[10px]" title="Presença confirmada">
-                ✓
+              <span 
+                className={cn(
+                  "absolute -bottom-1 -right-1 w-5 h-5 border-2 border-white rounded-full flex items-center justify-center text-white text-[10px]",
+                  isAbsentToday ? "bg-rose-500" : "bg-emerald-500"
+                )} 
+                title={isAbsentToday ? "Falta registrada hoje" : "Presença confirmada"}
+              >
+                {isAbsentToday ? "✕" : "✓"}
               </span>
             </div>
 
@@ -95,13 +129,23 @@ export default function WelcomeCard() {
                 </h3>
               </div>
               
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/70 mb-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                Presente na escola • Entrada às 07:45
-              </div>
+              {/* Live Attendance Status Badge */}
+              {isAbsentToday ? (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200/70 mb-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  </span>
+                  <span>Ausente hoje {attendanceSummary?.todayNotes ? `• ${attendanceSummary.todayNotes}` : '• Falta registrada'}</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/70 mb-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span>Presente na escola • Presença confirmada hoje ✓</span>
+                </div>
+              )}
 
               <p className="text-xs text-stone-600 mb-3">
                 {mainChild.age} anos • Matrícula ativa 2026
@@ -126,11 +170,15 @@ export default function WelcomeCard() {
       <div className="mt-6 pt-5 border-t border-stone-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-stone-600 relative z-10">
         <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-stone-50/70">
           <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-bold">
-            100%
+            {attendanceSummary ? `${attendanceSummary.attendanceRate}%` : '100%'}
           </div>
           <div>
             <p className="font-semibold text-stone-800">Frequência Escolar</p>
-            <p className="text-[11px] text-stone-600">Presença plena em todos os dias letivos</p>
+            <p className="text-[11px] text-stone-600">
+              {attendanceSummary && attendanceSummary.absentDays > 0 
+                ? `${attendanceSummary.absentDays} falta(s) no ano letivo`
+                : 'Presença plena em todos os dias letivos'}
+            </p>
           </div>
         </div>
 

@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { TeacherAuthProvider, useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import Logo from '@/components/shared/Logo';
-import { Eye, EyeOff, Loader2, BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Eye, EyeOff, Loader2, UserCheck, BookOpen } from 'lucide-react';
 
-export default function LoginPage() {
+function TeacherLoginContent() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useTeacherAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +18,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push('/professor');
     }
   }, [isAuthenticated, router]);
 
@@ -30,7 +28,7 @@ export default function LoginPage() {
     setErrorMessage(null);
     try {
       await login(email, password);
-      router.push('/dashboard');
+      router.push('/professor');
     } catch (error: any) {
       setErrorMessage(error.message || 'E-mail ou senha incorretos.');
     } finally {
@@ -41,18 +39,24 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-joaninha-cream bg-pattern p-4 sm:p-8">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-elevated p-8 sm:p-10 relative overflow-hidden animate-in">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-joaninha-red to-joaninha-bordeaux"></div>
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-joaninha-bordeaux via-joaninha-red to-amber-500"></div>
         
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6">
           <Logo className="w-32 h-auto" />
         </div>
         
-        <h1 className="text-2xl font-display font-bold text-center text-joaninha-black mb-2">
-          Bem-vindo ao Portal
-        </h1>
-        <p className="text-center text-joaninha-gray-500 mb-6 text-sm">
-          Acesse as informações do seu filho(a)
-        </p>
+        <div className="text-center mb-6">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-joaninha-cream text-joaninha-bordeaux border border-joaninha-bordeaux/15 mb-2">
+            <BookOpen className="w-3.5 h-3.5 text-joaninha-red" />
+            Portal do Educador
+          </span>
+          <h1 className="text-2xl font-display font-bold text-joaninha-black">
+            Diário de Classe & Chamada
+          </h1>
+          <p className="text-joaninha-gray-500 text-xs mt-1">
+            Acesso exclusivo para professoras e equipe pedagógica
+          </p>
+        </div>
 
         {errorMessage && (
           <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
@@ -60,10 +64,10 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-joaninha-black mb-1" htmlFor="email">
-              E-mail
+              E-mail Institucional
             </label>
             <input
               id="email"
@@ -71,7 +75,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-field w-full"
-              placeholder="seu@email.com"
+              placeholder="professora@joaninhacreche.com.br"
               required
             />
           </div>
@@ -79,11 +83,8 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-joaninha-black" htmlFor="password">
-                Senha
+                Senha de Acesso
               </label>
-              <span className="text-xs text-joaninha-gray-400">
-                Acesso seguro Supabase
-              </span>
             </div>
             <div className="relative">
               <input
@@ -110,21 +111,25 @@ export default function LoginPage() {
             disabled={isLoading}
             className="btn-primary w-full py-3 flex items-center justify-center mt-2 font-semibold shadow-sm"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Entrar no Portal"}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Acessar Diário de Classe"}
           </button>
         </form>
 
-        <div className="mt-8 pt-4 border-t border-gray-100 flex flex-col gap-2 text-center text-xs text-joaninha-gray-500">
-          <Link
-            href="/professor/login"
-            className="text-joaninha-bordeaux font-semibold hover:underline inline-flex items-center justify-center gap-1.5"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>É professora da escola? Acesse o Diário de Classe</span>
-          </Link>
-          <span className="text-joaninha-gray-400">Dúvidas no acesso? Entre em contato com a secretaria da escola.</span>
+        <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-stone-600">
+          <p className="font-semibold text-stone-600 mb-1">Conta de Demonstração:</p>
+          <code className="text-[11px] bg-stone-100 px-2 py-0.5 rounded text-joaninha-bordeaux font-mono">
+            camila.valente@joaninhacreche.com.br / senha123
+          </code>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TeacherLoginPage() {
+  return (
+    <TeacherAuthProvider>
+      <TeacherLoginContent />
+    </TeacherAuthProvider>
   );
 }
